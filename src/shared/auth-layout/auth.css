@@ -1,0 +1,18 @@
+.leftttt {
+  background-color: #00795f;
+  display: flex;
+  justify-content: flex-start;
+}
+.left-heading-title {
+  margin-top: 0;
+  color: white;
+  font-weight: bolder;
+  font-size: 30px;
+}
+.right-auth {
+  padding-top: 55px;
+}
+.first-tag {
+  margin-top: -50px;
+  padding-top: 0;
+}

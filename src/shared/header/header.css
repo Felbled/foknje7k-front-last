@@ -1,0 +1,20 @@
+header{
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.2);
+}
+.navbare ul {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 50px;
+}
+.navbare ul li a{
+    font-weight: 100;
+    font-size: 15px;
+}
+.nav-btn{
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+}

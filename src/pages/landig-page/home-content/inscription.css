@@ -1,0 +1,73 @@
+.hero-section {
+  background-image: url("../../../assets/images/inscription-back.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 80px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-repeat: no-repeat;
+  height: 720px;
+  width: 100%;
+}
+
+.hero-content {
+  display: flex;
+  align-items: center;
+  gap: 120px;
+  max-width: 1300px;
+  margin: auto;
+  flex-wrap: wrap;
+}
+
+.image-wrapper {
+    margin-right:110px;
+  width: 430px;
+  height: 430px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 8px solid white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.girl-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.text-content {
+  max-width: 600px;
+  color: white;
+}
+
+.text-content h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.text-content .highlight {
+  color: #00ffcc;
+}
+
+.text-content p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.cta-button {
+  background-color: white;
+  color: #00795f;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.cta-button:hover {
+  background-color: #f0f0f0ad;
+}

@@ -1,0 +1,46 @@
+.father-footerContainer {
+  display: flex;
+  flex-direction: column;
+}
+.footerContact {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.fa {
+  color: #00795f;
+}
+.courses-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.courses-title p {
+  font-size: 25px;
+  color: rgb(2, 8, 75);
+}
+.footer-informations p {
+  font-weight: 500;
+  font-size: 17px;
+  transition: color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+}
+.footer-informations p:hover {
+  color: #00795f;
+  transform: translateY(-2px);
+}
+.linkss a {
+  transition: color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+}
+.fb:hover {
+  color: rgb(10, 92, 193);
+}
+.ins:hover {
+  color: rgb(246, 69, 219);
+}
+.yt:hover {
+  color: red;
+}

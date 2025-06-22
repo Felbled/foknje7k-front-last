@@ -1,0 +1,21 @@
+@layer {
+  @font-face {
+    font-family: Montserrat-regular;
+    src: url(assets/fonts/Montserrat-Regular.ttf);
+  }
+  @font-face {
+    font-family: Montserrat-bold;
+    src: url(assets/fonts/Montserrat-Bold.ttf);
+  }
+  @font-face {
+    font-family: Montserrat-medium;
+    src: url(assets/fonts/Montserrat-Medium.ttf);
+  }
+  @font-face {
+    font-family: Montserrat-semi-bold;
+    src: url(assets/fonts/Montserrat-SemiBold.ttf);
+  }
+}
+.fc-event {
+  border: none !important;
+}

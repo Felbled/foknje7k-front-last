@@ -1,0 +1,70 @@
+.role-page {
+  margin: 0;
+  background-image: url("../../../assets/images/role-back1.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.role-title {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.role-options {
+  display: flex;
+  gap: 3rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.role-image-container {
+  position: relative;
+  width: 350px;
+  height: 350px;
+  overflow: hidden;
+}
+
+.role-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  padding: 10px;
+  border: 1px solid #009688;
+  border-radius: 50%;
+}
+.role-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid #009688;
+  background-color: white;
+  color: #009688;
+  font-weight: 500;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.role-button:hover {
+  background-color: #009688;
+  color: white;
+}
+
+.role-button.teacher {
+  background-color: #009688;
+  color: white;
+}
