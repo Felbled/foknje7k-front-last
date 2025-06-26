@@ -245,7 +245,7 @@ const Home: React.FC = () => {
         )}
       </div>
       <div className="h-10"></div>
-      <Newsletter />
+      
       <ClassesModal
         open={modalOpen}
         onClose={handleCloseModal}

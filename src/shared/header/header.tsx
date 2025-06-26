@@ -274,16 +274,19 @@ const Header: React.FC = () => {
               Contact
             </a>
           </li>
+          <li>  
+            {isLogged && (
+                      <Link
+                        to={role === "ROLE_TEACHER" ? "subject" : "home"}
+                        className="text-title font-montserrat_regular text-2xl hover:text-text"
+                      >
+                        Tableau de bord
+                      </Link>
+                    )}
+          </li>
         </ul>
 
-        {isLogged && (
-          <Link
-            to={role === "ROLE_TEACHER" ? "subject" : "home"}
-            className="text-title font-montserrat_regular text-2xl hover:text-text"
-          >
-            Tableau de bord
-          </Link>
-        )}
+        
       </nav>
 
       {/* Desktop and Mobile Buttons */}
