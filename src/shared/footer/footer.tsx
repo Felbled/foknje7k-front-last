@@ -23,7 +23,7 @@ const Footer = () => {
           <img
             alt="logo"
             src={Logo}
-            className="w-20 h-20 lg:w-40 lg:h-40 object-cover mb-2"
+            className="w-10 h-10 lg:w-40 lg:h-40 object-cover mb-1"
           />
           <div className="linkss flex space-x-4">
             <a
