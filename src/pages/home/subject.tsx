@@ -198,22 +198,7 @@ const Subject: React.FC = () => {
   return (
     <div className="pt-20 px-4 md:px-12 flex flex-col items-center">
       <WelcomeCard />
-      <div className="mt-10">
-        <CustomButton
-          text={"Tableau de Bord"}
-          width={"w-64"}
-          onClick={() => {
-            if (role === "ROLE_TEACHER") {
-              navigate("/dashboard/calender");
-            } else if (role === "ROLE_STUDENT") {
-              navigate("/dashboard/offer-student");
-            } else {
-              navigate("/dashboard/offer-teacher");
-            }
-          }}
-          className="bg-white border border-primary text-primary rounded-md h-14"
-        />
-      </div>
+     
       <div className="w-full flex flex-wrap justify-center my-10">
         {subjects.map((item) => (
           <div
@@ -313,7 +298,7 @@ const Subject: React.FC = () => {
         )}
       </div>
       <div className="h-10"></div>
-      <Newsletter />
+     
       <SubjectModal
         open={modalOpen}
         onClose={handleCloseModal}

@@ -64,3 +64,14 @@ export const ResetPassword = async (
   });
   return response.data;
 };
+// Ajoutez cette fonction dans votre fichier de services
+export const updateProfile = async (userData: any) => {
+  const response = await NetworkService.getInstance().sendHttpRequest({
+    url: "user/update-profile", // Endpoint à créer côté serveur
+    method: "PUT",
+    data: userData,
+    withLoader: true,
+    withFailureLogs: true
+  });
+  return response.data;
+};

@@ -1,0 +1,28 @@
+.offre-title-container{
+    color: white;
+    background-color: #048c6b;
+    border-radius: 40px;
+    padding: 10px 0;
+}
+.prof-title{
+    font-size: 27px;
+    font-family: 'Montserrat', sans-serif;
+}
+.boder-ligne{
+    color: #048c6b;
+}
+.cards-details-info{
+    background-color:white;
+    padding: 20px;
+    border-radius: 40px;
+    border: 1px solid #048c6b;
+    margin-bottom: 30px;
+}
+.subtitle-offer{
+    font-weight: bold;
+    color:rgb(50, 49, 49);
+    font-size: 14px;
+}
+.detail-color{
+    color:rgb(50, 49, 49);
+}

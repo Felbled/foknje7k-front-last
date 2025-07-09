@@ -12,7 +12,7 @@ const WelcomeCard = () => {
           <img
           alt={"home Book"}
           src={HomeBooks}
-          className="h-56 w-80 object-cover"
+          className="h-46 w-80 object-cover"
         />
         )
       }

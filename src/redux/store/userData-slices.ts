@@ -15,6 +15,7 @@ interface UserData {
   createdAt: string;
   updatedAt: string;
   role: Role;
+  educationLevel: string; 
 }
 
 interface UserState {

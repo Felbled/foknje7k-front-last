@@ -36,6 +36,8 @@ import roleEtudiant from "./roleEtudiant.png";
 import roleProf from "./roleProf.png";
 import newsletterOne from "./newsletter-one.jpeg";
 import newsletterTwo from "./newsletter-two.jpeg";
+import cardsback from "./Apprendre Sans Limites.png"
+import Qrcode from "./QR CODE.png";
 
 export {
   Home1,
@@ -75,4 +77,5 @@ export {
   roleEtudiant,
   roleProf, newsletterOne,
   newsletterTwo,
+  cardsback,Qrcode
 };

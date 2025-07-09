@@ -1,181 +1,326 @@
-import React, { useState } from "react";
-import { Outlet, NavLink } from "react-router-dom";
+import React, { createContext, useContext, useState } from "react";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store/store";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { Drawer, IconButton } from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHome,
+  faChartPie,
+  faGraduationCap,
+  faAnglesLeft,
+  faAnglesRight,
+  faTachometerAlt,
+  faUserGear,
+  faUserGraduate,
+  faChalkboardTeacher,
+  faBookOpen,
+  faFolderOpen,
+  faCalendarAlt,
+  faComments,
+  faEnvelopeOpenText,
+  faCreditCard,
+  faChartBar,
+} from "@fortawesome/free-solid-svg-icons";
 
-const sidebarLinks = [
-  {
-    path: "/offer-teacher",
-    name: "Proffesseur Offre",
-    roles: ["ROLE_SUPER_TEACHER", "ROLE_ADMIN"],
-  },
-  {
-    path: "/offer-student",
-    name: "Éleves Offre",
-    roles: ["ROLE_STUDENT", "ROLE_ADMIN"],
-  },
-  {
-    path: "/subscription",
-    name: "Abonnement",
-    roles: ["ROLE_SUPER_TEACHER", "ROLE_STUDENT"],
-  },
-  /*{
-    path: "/advertisement",
-    name: "Publicité",
-    roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"],
-  },*/
-  {
-    path: "/management-prof",
-    name: "Gestion Prof",
-    roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"],
-  },
-  {
-    path: "/management-student",
-    name: "Gestion Eléve",
-    roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"],
-  },
-  {
-    path: "/management-course",
-    name: "Gestion des cours",
-    roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"],
-  },
-  {
-    path: "/management-files",
-    name: "Gestion des fichiers",
-    roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"],
-  },
-  {
-    path: "/files",
-    name: "Les fichiers",
-    roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"],
-  },
-  {
-    path: "/calender",
-    name: "Calendrier Live",
-    roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"],
-  },
-  {
-    path: "/chat",
-    name: "Chat Room",
-    roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"],
-  },
-  {
-    path: "/requests-prof",
-    name: "Les Demandes des Prof",
-    roles: ["ROLE_ADMIN"],
-  },
-  {
-    path: "/requests-student",
-    name: "Les Demandes des élèves",
-    roles: ["ROLE_ADMIN"],
-  },
-  {
-    path: "/stats",
-    name: "Statestique",
-    roles: ["ROLE_ADMIN"],
-  },
-];
+// CONTEXT
+const SidebarContext = createContext<{ expanded: boolean }>({ expanded: true });
 
-const Dashboard = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const name = useSelector(
-    (state: RootState) => state?.user?.userData?.fullName,
-  );
-  const userRole = useSelector(
-    (state: RootState) => state?.user?.userData?.role.name,
-  );
+// Fonction pour déterminer l'icône à afficher selon le texte
+function getIconByText(text: string) {
+  const lower = text.toLowerCase();
+  if (lower === "accueil") return faHome;
+  if (lower.includes("tableau de bord")) return faChartPie;
+  if (lower.includes("abonnement")) return faCreditCard;
+  if (lower.includes("cours")) return faBookOpen;
+  if (lower.includes("fichier")) return faFolderOpen;
+  if (lower.includes("calendrier")) return faCalendarAlt;
+  if (lower.includes("chat")) return faComments;
+  if (lower.includes("statistique")) return faChartBar;
+  if (lower.includes("demande")) return faEnvelopeOpenText;
+  if (lower.includes("étudiant") || lower.includes("eleve")) return faUserGraduate;
+  if (lower.includes("professeur") || lower.includes("prof")) return faChalkboardTeacher;
+  if (lower.includes("gestion")) return faUserGear;
+  if (lower.includes("offre")) return faGraduationCap;
+  return faTachometerAlt;
+}
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+// Composant pour les éléments de menu
+function SidebarItem({
+  text,
+  to,
+  alert,
+}: {
+  text: string;
+  to: string;
+  alert?: boolean;
+}) {
+  const { expanded } = useContext(SidebarContext);
+  const icon = <FontAwesomeIcon icon={getIconByText(text)} className={`w-4 h-4 ${expanded ? "text-gray-600" : "text-gray-700"}`} />;
 
   return (
-    <div className="flex h-full pt-28">
-      {/* Sidebar for larger screens */}
-      <aside className="hidden sm:block w-64 bg-white shadow-md p-4">
-        <h2 className="text-lg font-bold mb-4">Dashboard</h2>
-        <nav>
-          <ul>
-            {sidebarLinks.map(
-              (link) =>
-                //@ts-ignore
-                link.roles.includes(userRole) && (
-                  <li key={link.path} className="mb-2">
-                    <NavLink
-                      to={"/dashboard" + link.path}
-                      className={({ isActive }) =>
-                        `block p-2 rounded text-balance ps-12 font-montserrat_medium ${
-                          isActive
-                            ? "bg-primary text-white"
-                            : "hover:bg-gray-200"
-                        }`
-                      }
-                    >
-                      {link.name}
-                    </NavLink>
-                  </li>
-                ),
-            )}
-          </ul>
+    <NavLink to={to}>
+      {({ isActive }) => (
+        <li
+          className={`
+            relative flex items-center
+            ${expanded ? "py-2 px-3 gap-2" : "py-1 px-2 gap-1"}
+            my-1 font-medium rounded-md cursor-pointer
+            transition-all duration-300 group
+            ${
+              isActive
+                ? "bg-gradient-to-tr from-[#09745f] via-[#048c6b] to-[#07b98e] text-white"
+                : "hover:bg-[#5ed5b9] text-gray-600"
+            }`}
+        >
+          {isActive ? (
+            <FontAwesomeIcon icon={getIconByText(text)} className="w-4 h-4 text-white" />
+          ) : (
+            icon
+          )}
+
+          <span
+            className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${
+              expanded ? "w-52 ml-2" : "w-0 ml-0"
+            }`}
+          >
+            {text}
+          </span>
+
+          {alert && (
+            <div
+              className={`absolute right-2 w-2 h-2 rounded bg-[#07b98e] ${
+                expanded ? "" : "top-2"
+              }`}
+            ></div>
+          )}
+
+          {!expanded && (
+            <div
+              className={`
+                absolute left-full rounded-md px-2 py-1 ml-3
+                bg-[#07b98e] text-white text-sm
+                invisible opacity-0 -translate-x-3 transition-all
+                group-hover:visible group-hover:opacity-100 group-hover:translate-x-0
+              `}
+            >
+              {text}
+            </div>
+          )}
+        </li>
+      )}
+    </NavLink>
+  );
+}
+
+// Liste des liens avec rôles autorisés
+const sidebarLinks = [
+  { path: "/offer-teacher", name: "Offre Professeur", roles: ["ROLE_SUPER_TEACHER", "ROLE_ADMIN"] },
+  { path: "/offer-student", name: "Offre Étudiant", roles: ["ROLE_STUDENT", "ROLE_ADMIN"] },
+  { path: "/subscription", name: "Abonnement", roles: ["ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
+  { path: "/management-prof", name: "Gestion Professeurs", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
+  { path: "/management-student", name: "Gestion Étudiants", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
+  { path: "/management-course", name: "Gestion des Cours", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
+  { path: "/management-files", name: "Gestion des Fichiers", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
+  { path: "/files", name: "Fichiers", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
+  { path: "/calender", name: "Calendrier Live", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
+  { path: "/chat", name: "Chat Room", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
+  { path: "/requests-prof", name: "Demandes des Professeurs", roles: ["ROLE_ADMIN"] },
+  { path: "/requests-student", name: "Demandes des Étudiants", roles: ["ROLE_ADMIN"] },
+  { path: "/stats", name: "Statistiques", roles: ["ROLE_ADMIN"] },
+];
+
+// Composant Breadcrumb
+function Breadcrumb() {
+  const location = useLocation();
+  
+  // Fonction de traduction des segments de chemin
+  const translateSegment = (segment: string) => {
+    const translations: Record<string, string> = {
+      'offer-teacher': 'Offre Professeur',
+      'offer-student': 'Offre Étudiant',
+      'subscription': 'Abonnement',
+      'management-prof': 'Gestion Professeurs',
+      'management-student': 'Gestion etudiants',
+      'management-course': 'Gestion des Cours',
+      'management-files': 'Gestion des Fichiers',
+      'files': 'Fichiers',
+      'calender': 'Calendrier Live',
+      'chat': 'Chat Room',
+      'requests-prof': 'Demandes des Professeurs',
+      'requests-student': 'Demandes des etudiants',
+      'stats': 'Statistiques',
+      'dashboard': 'Tableau de Bord'
+    };
+
+    const lowerSegment = segment.toLowerCase();
+    return translations[lowerSegment] || segment;
+  };
+
+  const pathSegments = location.pathname
+    .split('/')
+    .filter(Boolean)
+    .map(segment => 
+      translateSegment(segment)
+        .replace(/\b\w/g, (l) => l.toUpperCase())
+    );
+
+  const breadcrumb = ['Accueil', ...pathSegments];
+
+  return (
+    <div className="w-full flex items-center space-x-2 text-sm font-montserrat_medium text-title">
+      {breadcrumb.map((crumb, index) => (
+        <div key={index} className="flex items-center gap-1">
+          <FontAwesomeIcon
+            icon={getIconByText(crumb)}
+            className="w-4 h-4 text-gray-600"
+          />
+          <span>{crumb}</span>
+          {index < breadcrumb.length - 1 && (
+            <span className="mx-1 text-gray-400">{">"}</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Composant principal
+const Dashboard = () => {
+  const [expanded, setExpanded] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const userRole = useSelector((state: RootState) => state?.user?.userData?.role?.name);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  return (
+    <div className="flex h-full pt-24">
+      {/* Sidebar - grand écran */}
+      <aside className="h-screen hidden md:block">
+        <nav className="h-full flex flex-col bg-[#f2f9f7] border-b border-r border-[#09745f]"> 
+          <div className="p-4  flex justify-between items-center">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <FontAwesomeIcon
+                icon={faGraduationCap}
+                className={`text-[#09745f] transition-all ${
+                  expanded ? "w-7 h-7 animate-spin [animation-duration:4s]" : "w-0 h-0"
+                }`}
+              />
+
+              {expanded && (
+                <span
+                  className="text-lg font-semibold text-[#09745f] animate-[fadeInLeft_1s_ease-out_forwards]"
+                  style={{
+                    animationName: 'fadeInLeft',
+                    animationDuration: '1s',
+                    animationTimingFunction: 'ease-out',
+                    animationFillMode: 'forwards',
+                  }}
+                >
+                  Tableau de Bord
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={() => setExpanded((curr) => !curr)}
+              className="p-1.5 rounded-lg bg-gradient-to-r from-[#09745f] via-[#048c6b] to-[#07b98e] text-white hover:opacity-90"
+            >
+              <FontAwesomeIcon icon={expanded ? faAnglesLeft : faAnglesRight} className="w-4 h-4" />
+            </button>
+
+            <style>
+              {`
+                @keyframes fadeInLeft {
+                  0% {
+                    opacity: 0;
+                    transform: translateX(-20px);
+                  }
+                  100% {
+                    opacity: 1;
+                    transform: translateX(0);
+                  }
+                }
+              `}
+            </style>
+          </div>
+
+          <SidebarContext.Provider value={{ expanded }}>
+            <ul className="flex-1 px-2">
+              {sidebarLinks.map(
+                (link) =>
+                  userRole && link.roles.includes(userRole) && (
+                    <SidebarItem key={link.path} to={"/dashboard" + link.path} text={link.name} />
+                  )
+              )}
+            </ul>
+          </SidebarContext.Provider>
         </nav>
       </aside>
 
-      <div className="md:hidden absolute  right-3 top-20">
+      {/* Toggle sidebar bouton mobile */}
+      <div className="md:hidden absolute right-3 top-20">
         <IconButton onClick={toggleSidebar}>
           <MenuOpenIcon />
         </IconButton>
       </div>
 
-      {/* Drawer for mobile screens only */}
+      {/* Drawer mobile */}
       <Drawer
         anchor="right"
         open={isSidebarOpen}
         onClose={toggleSidebar}
-        className="sm:hidden" // Drawer only appears in mobile view
+        className="sm:hidden"
         transitionDuration={{ enter: 500, exit: 500 }}
       >
         <aside className="w-64 bg-white shadow-md p-4 h-full">
-          <h2 className="text-lg font-bold mb-4">Dashboard</h2>
+          <h2 className="text-lg font-bold mb-4">Tableau de Bord</h2>
           <nav>
             <ul>
               {sidebarLinks.map(
                 (link) =>
-                  //@ts-ignore
+                  userRole &&
                   link.roles.includes(userRole) && (
                     <li key={link.path} className="mb-2">
                       <NavLink
                         to={"/dashboard" + link.path}
                         className={({ isActive }) =>
-                          `block p-2 rounded text-balance ps-12 font-montserrat_medium ${
+                          `block p-2 rounded ps-12 font-montserrat_medium ${
                             isActive
-                              ? "bg-primary text-white"
-                              : "hover:bg-gray-200"
+                              ? "bg-gradient-to-tr from-[#09745f] via-[#041b8c] to-[#07b98e] text-white"
+                              : "hover:bg-[#bda2eb] text-gray-600"
                           }`
                         }
                       >
-                        {link.name}
+                        {({ isActive }) => (
+                          <>
+                            <FontAwesomeIcon 
+                              icon={getIconByText(link.name)} 
+                              className={`w-4 h-4 mr-2 ${isActive ? "text-white" : "text-gray-600"}`} 
+                            />
+                            {link.name}
+                          </>
+                        )}
                       </NavLink>
                     </li>
-                  ),
+                  )
               )}
             </ul>
           </nav>
         </aside>
       </Drawer>
-      <main className="flex-1 w-[70%]]">
-        <div className="h-20 bg-white  justify-end items-center px-5 hidden lg:flex">
-          <div className="w-1/3 flex justify-end">
-            <div className="flex items-center">
-              <p className="font-montserrat_regular text-xs text-title ms-5">
-                {name}
-              </p>
-            </div>
-          </div>
+
+      {/* Contenu principal */}
+      <main className="flex-1 ">
+        <div className="h-[65px] justify-between items-center px-5 hidden lg:flex shadow-md bg-[#e8f5f1] border-b border-l ml-1 border-[#09745f]">
+          <Breadcrumb />
         </div>
-        <div className=" px-7 lg:px-14 pt-10 h-full ">
-          <Outlet />
+
+        <div className="px-5 lg:px-10 pt-4 h-full">
+          <div className=" rounded-lg shadow-sm p-4 h-full">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

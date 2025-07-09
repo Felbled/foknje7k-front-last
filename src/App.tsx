@@ -28,6 +28,7 @@ import OfferStudent from "./pages/dashboard/offer/offer-student";
 import StudentRequests from "./pages/dashboard/request/student-requests";
 import VerificationCode from "./pages/auth/forget-password/verification-code";
 import Stats from "./pages/dashboard/stats/stats";
+import ProfilePage from "./pages/dashboard/updateprofil/updateprofil";
 
 function App() {
   return (
@@ -58,6 +59,8 @@ function App() {
               <Route path="requests-student" element={<StudentRequests />} />
               <Route path="files" element={<Files />} />
               <Route path="stats" element={<Stats />} />
+              <Route path="updateprofil" element={<ProfilePage />} />
+
             </Route>
           </Route>
           <Route path="/login" element={<Login />} />
