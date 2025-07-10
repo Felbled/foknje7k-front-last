@@ -9,14 +9,17 @@ export const getEventGroupService = async (id: any) => {
   });
   return response.data;
 };
+export interface EventPayload {
+  title: string;
+  startTime: string;
+  endTime: string;
+  backgroundColor: string;
+  discordUrl?: string;
+}
+
 export const addEventToGroupService = async (
   id: any,
-  data: {
-    title: string;
-    startTime: string;
-    endTime: string;
-    backgroundColor: string;
-  },
+  data: EventPayload,
 ) => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `groups/${id}/events`,
@@ -30,12 +33,7 @@ export const addEventToGroupService = async (
 export const updateEventGroupService = async (
   id: any,
   eventId: any,
-  data: {
-    title: string;
-    startTime: string;
-    endTime: string;
-    backgroundColor: string;
-  },
+  data: EventPayload,
 ) => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `groups/${id}/events/${eventId}`,

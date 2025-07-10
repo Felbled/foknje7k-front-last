@@ -69,6 +69,7 @@ const Calendar: React.FC = () => {
     end: "",
     backgroundColor: colorOptions[0].rgba,
     classId: null,
+    discordUrl: "", 
   });
 
   // Fetch group options and event data based on the selected group
@@ -100,6 +101,7 @@ const Calendar: React.FC = () => {
             start: e.startTime,
             end: e.endTime,
             backgroundColor: e.backgroundColor,
+            discordUrl: e.discordUrl, // include discordUrl from API
           }));
           setEvents(eventsData);
         })
@@ -157,6 +159,7 @@ const Calendar: React.FC = () => {
       end: "",
       backgroundColor: colorOptions[0].rgba,
       classId: eventData.classId,
+      discordUrl: "",
     });
   };
 
@@ -184,11 +187,12 @@ const Calendar: React.FC = () => {
         backgroundColor: eventData.backgroundColor,
         endTime: eventData.end,
         startTime: eventData.start,
+        discordUrl: eventData.discordUrl,
       })
         .then(() => {
           setEvents((prevEvents: any[]) =>
             prevEvents.map((event: any) =>
-              event.id === eventData.id ? eventData : event,
+              event.id === eventData.id ? { ...eventData } : event,
             ),
           );
           handleClose();
@@ -203,6 +207,7 @@ const Calendar: React.FC = () => {
         backgroundColor: eventData.backgroundColor,
         endTime: eventData.end,
         startTime: eventData.start,
+        discordUrl: eventData.discordUrl,
       })
         .then((res) => {
           setEvents((prevEvents: any) => [...prevEvents, res.data]);
@@ -224,6 +229,7 @@ const Calendar: React.FC = () => {
             start: e.startTime,
             end: e.endTime,
             backgroundColor: e.backgroundColor,
+            discordUrl: e.discordUrl,
           }));
           setEvents(eventsData);
         });
@@ -237,21 +243,18 @@ const Calendar: React.FC = () => {
     if (userRole === "ROLE_ADMIN" || userRole === "ROLE_SUPER_TEACHER") {
       setIsEditMode(true);
       setOpen(true);
-      navigator.clipboard.writeText(info.event.title).then(() => {});
       setEventData({
         // @ts-ignore
         id: info.event.id,
         title: info.event.title,
-        start: moment(info.event.start).format("YYYY-MM-DDTHH:mm"),
-        end: moment(info.event.end).format("YYYY-MM-DDTHH:mm"),
+        start: info.event.start && moment(info.event.start).isValid() ? moment(info.event.start).format("YYYY-MM-DDTHH:mm") : '',
+        end: info.event.end && moment(info.event.end).isValid() ? moment(info.event.end).format("YYYY-MM-DDTHH:mm") : '',
         backgroundColor: info.event.backgroundColor || colorOptions[0].rgba,
         classId: eventData.classId,
-      });
-    } else {
-      navigator.clipboard.writeText(info.event.title).then(() => {
-        alert("Texte copié: " + info.event.title);
+        discordUrl: info.event.extendedProps.discordUrl || "", // include discordUrl from event
       });
     }
+    // For other users, do nothing or add your own logic if needed
   };
   const handleCustomButtonClick = (viewType: string) => {
     if (calendarRef.current) {
@@ -261,7 +264,7 @@ const Calendar: React.FC = () => {
     }
   };
   return (
-    <div className="w-full pb-4 bg-white p-5 rounded-3xl">
+    <div className="w-full p-5 pb-4 bg-white rounded-3xl">
       <CustomHeader
         currentDate={currentDate}
         onPrev={handlePrevClick}
@@ -350,6 +353,16 @@ const Calendar: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          <TextField
+            margin="dense"
+            label="Discord Link"
+            type="url"
+            fullWidth
+            variant="outlined"
+            name="discordUrl"
+            value={eventData.discordUrl}
+            onChange={handleChange}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} variant="outlined" color="secondary">
@@ -371,10 +384,11 @@ const Calendar: React.FC = () => {
 function renderEventContent(eventInfo: { event: EventApi }) {
   const startTime = moment(eventInfo.event.start).format("h:mm A");
   const endTime = moment(eventInfo.event.end).format("h:mm A");
+  const discordUrl = eventInfo.event.extendedProps.discordUrl;
 
   return (
     <div
-      className="flex flex-col justify-end p-2 rounded text-white"
+      className="flex flex-col justify-end p-2 text-white rounded"
       style={{
         backgroundColor: eventInfo.event.backgroundColor || "#000",
         opacity: 0.85,
@@ -394,6 +408,16 @@ function renderEventContent(eventInfo: { event: EventApi }) {
       >
         {eventInfo.event.title}
       </strong>
+      {discordUrl && (
+        <a
+          href={discordUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 text-xs text-blue-200 underline"
+        >
+          Join Our Discord
+        </a>
+      )}
     </div>
   );
 }
@@ -423,20 +447,20 @@ const CustomHeader: React.FC<
   );
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center bg-gray-800 text-title p-4">
+    <div className="flex flex-col items-center justify-between p-4 bg-gray-800 md:flex-row text-title">
       <div className="flex items-center mb-2 md:mb-0">
         <IconButton
-          className="hover:bg-gray-700 rounded"
+          className="rounded hover:bg-gray-700"
           color="inherit"
           onClick={onPrev}
         >
           <ArrowLeft />
         </IconButton>
-        <div className="text-lg font-semibold flex flex-col items-center">
+        <div className="flex flex-col items-center text-lg font-semibold">
           <div>{currentDate}</div>
         </div>
         <IconButton
-          className="hover:bg-gray-700 rounded"
+          className="rounded hover:bg-gray-700"
           color="inherit"
           onClick={onNext}
         >
@@ -444,7 +468,7 @@ const CustomHeader: React.FC<
         </IconButton>
       </div>
 
-      <div className="flex items-center space-x-2 mb-2 md:mb-0">
+      <div className="flex items-center mb-2 space-x-2 md:mb-0">
         <div
           className={`capitalize font-montserrat_semi_bold text-lg px-4 py-2 cursor-pointer ${
             activeView === "timeGridWeek"
@@ -467,7 +491,7 @@ const CustomHeader: React.FC<
         </div>
       </div>
 
-      <div className="flex lg:flex-row flex-col items-center">
+      <div className="flex flex-col items-center lg:flex-row">
         {(userRole === "ROLE_ADMIN" || userRole === "ROLE_SUPER_TEACHER") && (
           <Button onClick={onOpenModal} className="text-nowrap">Add Event</Button>
         )}
