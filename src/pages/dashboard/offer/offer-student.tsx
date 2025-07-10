@@ -179,22 +179,22 @@ const OfferStudent = () => {
         data.length === 0 ? "justify-center h-[60vh]" : ""
       }`}
     >
-      {isConfirmModal ? (
+      {isConfirmModal && selectedOffer && selectedOffer.price !== 0 ? (
         <div className="w-full h-[70vh] flex flex-col items-center">
           <div className="w-9/12 mb-10">
-            <h1 className="text-title text-lg lg:text-3xl font-montserrat_semi_bold">
+            <h1 className="text-lg text-title lg:text-3xl font-montserrat_semi_bold">
               Confirmer offre
             </h1>
           </div>
-          <div className="w-3/4 sm:w-1/2 p-5 flex flex-col items-center bg-white rounded-3xl">
-            <h1 className="font-montserrat_semi_bold text-lg lg:text-3xl text-title mb-5">
+          <div className="flex flex-col items-center w-3/4 p-5 bg-white sm:w-1/2 rounded-3xl">
+            <h1 className="mb-5 text-lg font-montserrat_semi_bold lg:text-3xl text-title">
               Confirmer le Payement
             </h1>
-            <p className="font-montserrat_regular text-sm text-text mb-5">
+            <p className="mb-5 text-sm font-montserrat_regular text-text">
               veuillez fournir une image claire du reçu de paiment
             </p>
             <Card
-              className="w-full p-6 mb-5 flex flex-col items-center justify-center cursor-pointer border-dashed border-2 border-primary"
+              className="flex flex-col items-center justify-center w-full p-6 mb-5 border-2 border-dashed cursor-pointer border-primary"
               onClick={handleCardClick}
             >
               <input
@@ -204,29 +204,74 @@ const OfferStudent = () => {
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <AddIcon className="text-primary text-6xl mb-2" />
+              <AddIcon className="mb-2 text-6xl text-primary" />
               <Typography className="text-primary font-montserrat_semi_bold">
                 {selectedFile ? selectedFile.name : "Ajouter le reçu"}
               </Typography>
             </Card>
-            <div className="w-full flex flex-col sm:flex-row justify-between">
+            <div className="flex flex-col justify-between w-full sm:flex-row">
               <CustomButton
-                className="bg-white border border-primary w-full text-primary rounded-md h-10 mb-4 sm:mb-0 sm:w-1/3"
+                className="w-full h-10 mb-4 bg-white border rounded-md border-primary text-primary sm:mb-0 sm:w-1/3"
                 text={"Précedent"}
                 onClick={handleBackToMainView}
               />
               <CustomButton
-                className="bg-primary text-white rounded-md h-10 w-full sm:w-1/3"
+                className="w-full h-10 text-white rounded-md bg-primary sm:w-1/3"
                 text={"Envoyer"}
                 onClick={handleConfirmPayment}
               />
             </div>
           </div>
         </div>
+      ) : isConfirmModal && selectedOffer && selectedOffer.price === 0 ? (
+        <div className="w-full h-[40vh] flex flex-col items-center justify-center">
+          <div className="w-9/12 mb-10">
+            <h1 className="text-lg text-title lg:text-3xl font-montserrat_semi_bold">
+              Offre gratuite
+            </h1>
+          </div>
+          <div className="flex flex-col items-center w-3/4 p-5 bg-white sm:w-1/2 rounded-3xl">
+            <h1 className="mb-5 text-lg font-montserrat_semi_bold lg:text-3xl text-title">
+              Vous allez rejoindre cette offre gratuitement !
+            </h1>
+            <CustomButton
+              className="w-full h-10 text-white rounded-md bg-primary sm:w-1/3"
+              text={"Confirmer"}
+              onClick={() => {
+                // Call backend to subscribe student to free offer
+                sendOfferService(selectedOffer.id, {})
+                  .then(() => {
+                    fetchData();
+                    setIsConfirmModal(false);
+                    if (snackbarContext) {
+                      snackbarContext.showMessage(
+                        "Succes",
+                        "Vous avez rejoint l'offre gratuite avec succès",
+                        "success"
+                      );
+                    }
+                    if (selectedOffer.groupId) {
+                      window.location.href = `/dashboard/group/${selectedOffer.groupId}`;
+                    }
+                  })
+                  .catch((e: any) => {
+                    console.log(e);
+                    if (snackbarContext) {
+                      snackbarContext.showMessage(
+                        "Erreur",
+                        "Erreur lors de la souscription à l'offre gratuite",
+                        "error"
+                      );
+                    }
+                  });
+              }}
+            />
+          </div>
+        </div>
       ) : (
         <>
           {data && data.length > 0 ? (
-            <div className="w-full md:w-8/12 h-full">
+            <div className="w-full h-full md:w-8/12">
               <Carousel
                 navButtonsAlwaysVisible={true}
                 navButtonsProps={{
@@ -269,10 +314,10 @@ const OfferStudent = () => {
             <div></div>
           )}
           {role === "ROLE_ADMIN" && (
-            <div className="flex item-center justify-center w-full md:w-1/3 mt-5 md:mt-0">
+            <div className="flex justify-center w-full mt-5 item-center md:w-1/3 md:mt-0">
               <div
                 onClick={handleOpenModal}
-                className="cursor-pointer bg-primary p-5 rounded-full"
+                className="p-5 rounded-full cursor-pointer bg-primary"
               >
                 <AddIcon className="text-white" style={{ fontSize: 50 }} />
               </div>
@@ -295,19 +340,19 @@ const OfferStudent = () => {
                 placeholder="Rechercher un professeur..."
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className="border rounded p-2 mb-4"
+                className="p-2 mb-4 border rounded"
               />
               {filteredTeachers.map((item, index) => (
                 <div
                   key={index.toString()}
                   className="flex items-center justify-between w-full mb-5"
                 >
-                  <p className="text-title text-lg font-montserrat_semi_bold">
+                  <p className="text-lg text-title font-montserrat_semi_bold">
                     {item.fullName}
                   </p>
                   <div className={"flex"}>
                     <div
-                      className="cursor-pointer mx-3"
+                      className="mx-3 cursor-pointer"
                       onClick={() => handleOpenProfileDialog(item)}
                     >
                       <VisibilityIcon className="text-primary" />
@@ -338,26 +383,26 @@ const OfferStudent = () => {
           style: { maxWidth: "800px" },
         }}
       >
-        <DialogTitle className="text-center font-semibold text-2xl text-primary mb-3">
+        <DialogTitle className="mb-3 text-2xl font-semibold text-center text-primary">
           Profile Details
         </DialogTitle>
         <DialogContent className="flex flex-col items-center">
           {selectedProfile && (
             <>
               <div className="flex items-center mb-4">
-                <PersonIcon className="text-primary mr-2" />
-                <Typography variant="h6" className="font-medium text-xl">
+                <PersonIcon className="mr-2 text-primary" />
+                <Typography variant="h6" className="text-xl font-medium">
                   {selectedProfile.fullName}
                 </Typography>
               </div>
               <div className="flex items-center mb-4">
-                <MailOutlineOutlinedIcon className="text-primary mr-2" />
+                <MailOutlineOutlinedIcon className="mr-2 text-primary" />
                 <Typography variant="body1" className="text-lg">
                   {selectedProfile.email}
                 </Typography>
               </div>
               <div className="flex items-center mb-4">
-                <PhoneIcon className="text-primary mr-2" />
+                <PhoneIcon className="mr-2 text-primary" />
                 <Typography variant="body1" className="text-lg">
                   {selectedProfile.phoneNumber}
                 </Typography>
@@ -368,7 +413,7 @@ const OfferStudent = () => {
         <DialogActions className="justify-center">
           <Button
             onClick={handleCloseProfileDialog}
-            className="bg-primary text-white px-6 py-2 rounded-full"
+            className="px-6 py-2 text-white rounded-full bg-primary"
           >
             Close
           </Button>
