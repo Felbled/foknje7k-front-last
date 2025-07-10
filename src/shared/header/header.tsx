@@ -25,13 +25,20 @@ const Header: React.FC = () => {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollTop, setLastScrollTop] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // États séparés pour les dropdowns desktop et mobile
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownMobileOpen, setDropdownMobileOpen] = useState(false);
+  
   const navigation = useNavigate();
   const location = useLocation();
   const isLogged = useSelector((state: RootState) => state.auth.isLogged);
   const dispatch = useDispatch();
   const isDashboardRoute = location.pathname.startsWith("/dashboard");
+  
+  // Réfs distinctes pour les dropdowns
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownMobileRef = useRef<HTMLDivElement>(null);
 
   // Calcul des initiales et nom complet
   const userFullName = userData?.fullName || '';
@@ -69,11 +76,19 @@ const Header: React.FC = () => {
     };
   }, [lastScrollTop, location.pathname]);
 
-  // Gestion des clics en dehors du menu dropdown
+  // Gestion des clics en dehors des menus dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      
+      // Vérifier pour le dropdown desktop
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setDropdownOpen(false);
+      }
+      
+      // Vérifier pour le dropdown mobile
+      if (dropdownMobileRef.current && !dropdownMobileRef.current.contains(target)) {
+        setDropdownMobileOpen(false);
       }
     };
 
@@ -89,6 +104,7 @@ const Header: React.FC = () => {
     dispatch(logOut());
     dispatch(clearUserData());
     setDropdownOpen(false);
+    setDropdownMobileOpen(false);
     setIsMobileMenuOpen(false);
   };
 
@@ -101,6 +117,8 @@ const Header: React.FC = () => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+    // Fermer le dropdown mobile quand on ferme le menu complet
+    if (isMobileMenuOpen) setDropdownMobileOpen(false);
   };
 
   // Fonction pour naviguer vers le tableau de bord selon le rôle
@@ -108,14 +126,15 @@ const Header: React.FC = () => {
     const path = role === "ROLE_TEACHER" ? "/subject" : "/home";
     navigation(path);
     setDropdownOpen(false);
+    setDropdownMobileOpen(false);
     if (isMobileMenuOpen) toggleMobileMenu();
   };
 
   return (
     <header
-      className={`z-20 h-[80px] bg-text bg-opacity-5 backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 transition-transform duration-300 ${
+     className={`z-20 h-[80px] bg-text bg-opacity-5 backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 transition-transform duration-300 ${
         showHeader ? "translate-y-0" : "-translate-y-full"
-      }`}
+      } shadow-md`}
     >
       {/* Logo */}
       <img
@@ -132,39 +151,35 @@ const Header: React.FC = () => {
         }}
         src={Logo}
         alt="Logo"
-        className="logo-navv h-12 lg:h-20 cursor-pointer"
+        className="logo-navv h-12 lg:h-16 cursor-pointer pl-5 lg:pl-20"
       />
 
       {/* Mobile Menu Toggle */}
       <div className="lg:hidden flex items-center">
-        <button onClick={toggleMobileMenu}>
+        <button onClick={toggleMobileMenu} className="z-30">
           {isMobileMenuOpen ? (
-            <CloseIcon className="text-title text-3xl" />
+            <CloseIcon className="text-title text-3xl mr-5" />
           ) : (
-            <MenuIcon className="text-title text-3xl" />
+            <MenuIcon className="text-title text-3xl mr-5" />
           )}
         </button>
       </div>
 
       {/* Mobile Menu */}
       <nav
-        className={`lg:hidden fixed h-max top-0 left-0 w-full bg-white p-6 z-30 transition-transform duration-300 ${
+        className={`lg:hidden fixed top-0 left-0 w-full h-full bg-[#f9f6f1] p-6 z-20 transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Close Button (positioned top-right) */}
-        <div className="flex justify-end">
-          <CloseIcon
-            onClick={toggleMobileMenu}
-            className="text-title text-3xl cursor-pointer"
-          />
-        </div>
+       
+        
         
         {/* Menu Links */}
-        <div className="flex flex-col mt-6 space-y-4">
+        <div className="bg-[#f9f6f1] rounded-t-[40px] pl-5  flex flex-col mt-8 space-y-6">
           <a
             href="#home"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               toggleMobileMenu();
               if (location.pathname !== "/") {
                 navigation("/");
@@ -172,13 +187,14 @@ const Header: React.FC = () => {
                 scrollToSection("home");
               }
             }}
-            className="text-title font-montserrat_regular text-2xl"
+            className="text-title font-montserrat_regular text-2xl hover:text-primary"
           >
             Acceuil
           </a>
           <a
             href="#about"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               toggleMobileMenu();
               if (location.pathname !== "/") {
                 navigation("/");
@@ -186,13 +202,14 @@ const Header: React.FC = () => {
                 scrollToSection("about");
               }
             }}
-            className="text-title font-montserrat_regular text-2xl"
+            className="text-title font-montserrat_regular text-2xl hover:text-primary"
           >
             À propos
           </a>
           <a
             href="#free-courses"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               toggleMobileMenu();
               if (location.pathname !== "/") {
                 navigation("/");
@@ -200,13 +217,14 @@ const Header: React.FC = () => {
                 scrollToSection("free-courses");
               }
             }}
-            className="text-title font-montserrat_regular text-2xl"
+            className="text-title font-montserrat_regular text-2xl hover:text-primary"
           >
             Cours gratuits
           </a>
           <a
             href="#contact"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               toggleMobileMenu();
               if (location.pathname !== "/") {
                 navigation("/");
@@ -214,89 +232,93 @@ const Header: React.FC = () => {
                 scrollToSection("contact");
               }
             }}
-            className="text-title font-montserrat_regular text-2xl"
+            className="text-title pb-2 font-montserrat_regular text-2xl hover:text-primary"
           >
             Contact
           </a>
         </div>
         
         {/* Menu utilisateur mobile */}
-        <div className="lg:hidden mt-4">
+        <div className="lg:hidden rounded-b-[40px] pb-3 pr-3 bg-[#f9f6f1]" ref={dropdownMobileRef}>
           {isLogged ? (
-            <div className="mt-4">
-              <div className="flex items-center justify-between p-2 bg-gray-100 rounded-md">
+            <div className="">
+              <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg">
                 <div className="flex items-center">
-                  <div className="bg-[#3492d6] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium">
+                  <div className="bg-[#3492d6] text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-medium">
                     {userInitials}
                   </div>
-                  <span className="ml-2 text-sm font-medium text-gray-700 truncate max-w-[120px]">
+                  <span className="ml-3 text-base font-medium text-gray-700 truncate max-w-[140px]">
                     {userFullName}
                   </span>
                 </div>
-                <button onClick={() => setDropdownOpen(!dropdownOpen)}>
+                <button onClick={() => setDropdownMobileOpen(!dropdownMobileOpen)}>
                   <FontAwesomeIcon 
                     icon={faChevronDown} 
-                    className="h-3 w-3 text-gray-500 transition-transform duration-200"
-                    style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    className="h-4 w-4 text-gray-500 transition-transform duration-200"
+                    style={{ transform: dropdownMobileOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                   />
                 </button>
               </div>
 
-              {dropdownOpen && (
-                <div className="mt-3 bg-white rounded-md shadow-lg  z-50 border border-gray-200">
+              {dropdownMobileOpen && (
+                <div className="mt-3 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
                   <a 
                     href="#" 
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
+                    className="flex items-center px-4 py-3 text-base text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
                     onClick={(e) => {
                       e.preventDefault();
                       goToDashboard();
                     }}
                   >
-                    <FontAwesomeIcon icon={faChartBar} className="h-4 w-4 mr-2 text-blue-500" />
+                    <FontAwesomeIcon icon={faChartBar} className="h-5 w-5 mr-3 text-blue-500" />
                     Tableau de bord
                   </a>
                   <a 
                     href="#" 
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
+                    className="flex items-center px-4 py-3 text-base text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
                     onClick={(e) => {
                       e.preventDefault();
                       navigation('/dashboard/updateprofil');
-                      setDropdownOpen(false);
+                      setDropdownMobileOpen(false);
                       toggleMobileMenu();
                     }}
                   >
-                    <FontAwesomeIcon icon={faUserCircle} className="h-4 w-4 mr-2 text-blue-500" />
+                    <FontAwesomeIcon icon={faUserCircle} className="h-5 w-5 mr-3 text-blue-500" />
                     Mon espace
                   </a>
                   <a 
                     href="#" 
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
+                    className="flex items-center px-4 py-3 text-base text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
                     onClick={(e) => {
                       e.preventDefault();
                       handleLogout();
-                      setDropdownOpen(false);
-                      toggleMobileMenu();
                     }}
                   >
-                    <FontAwesomeIcon icon={faSignOutAlt} className="h-4 w-4 mr-2 text-red-500" />
+                    <FontAwesomeIcon icon={faSignOutAlt} className="h-5 w-5 mr-3 text-red-500" />
                     Déconnexion
                   </a>
                 </div>
               )}
             </div>
           ) : (
-            <div className="lg:hidden mt-4 flex flex-col space-y-4">
+            <div className="lg:hidden pr-3 pl-3 ml-0 rounded-b-[40px] bg-[#f9f6f1] flex flex-col space-y-5">
               <CustomButton
                 text={"S'inscrire"}
-                onClick={() => navigation("/role")}
+                onClick={() => {
+                  navigation("/role");
+                  toggleMobileMenu();
+                }}
                 width={"w-full"}
-                className="h-10 rounded-md"
+                className="h-12 rounded-lg text-base"
               />
               <CustomButton
                 text={"Se connecter"}
-                onClick={() => navigation("/login")}
+                onClick={() => {
+                  navigation("/login");
+                  toggleMobileMenu();
+                }}
                 width={"w-full"}
-                className="bg-white border border-primary text-primary rounded-md h-10"
+                className="bg-white border-2  border-primary text-primary rounded-lg h-12 text-base"
               />
             </div>
           )}
@@ -304,35 +326,36 @@ const Header: React.FC = () => {
       </nav>
 
       {/* Desktop Menu */}
-      <nav className="navbare">
-        <ul>
+      <nav className="hidden lg:block">
+        <ul className="flex space-x-8 xl:space-x-12">
           <li>
             <a
               href="#home"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 if (location.pathname !== "/") {
                   navigation("/");
                 } else {
                   scrollToSection("home");
                 }
               }}
-              className="text-title font-montserrat_regular text-2xl hover:text-text"
+              className="text-title font-montserrat_regular text-lg hover:text-primary transition-colors"
             >
               Acceuil
             </a>
           </li>
           <li>
-            {" "}
             <a
               href="#about"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 if (location.pathname !== "/") {
                   navigation("/");
                 } else {
                   scrollToSection("about");
                 }
               }}
-              className="text-title font-montserrat_regular text-2xl hover:text-text"
+              className="text-title font-montserrat_regular text-lg hover:text-primary transition-colors"
             >
               À propos
             </a>
@@ -340,30 +363,31 @@ const Header: React.FC = () => {
           <li>
             <a
               href="#free-courses"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 if (location.pathname !== "/") {
                   navigation("/");
                 } else {
                   scrollToSection("free-courses");
                 }
               }}
-              className="text-title font-montserrat_regular text-2xl hover:text-text"
+              className="text-title font-montserrat_regular text-lg hover:text-primary transition-colors"
             >
               Cours gratuits
             </a>
           </li>
           <li>
-            {" "}
             <a
               href="#contact"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 if (location.pathname !== "/") {
                   navigation("/");
                 } else {
                   scrollToSection("contact");
                 }
               }}
-              className="text-title font-montserrat_regular text-2xl hover:text-text"
+              className="text-title font-montserrat_regular text-lg hover:text-primary transition-colors"
             >
               Contact
             </a>
@@ -378,10 +402,10 @@ const Header: React.FC = () => {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center space-x-2 rounded-full pl-2 pr-4 py-1 hover:bg-gray-50 transition-all duration-200"
           >
-            <div className="bg-[#3492d6] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium shadow-md">
+            <div className="bg-[#3492d6] text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-medium shadow-md">
               {userInitials}
             </div>
-            <span className="text-sm font-medium text-gray-700 truncate max-w-[120px]">
+            <span className="text-base font-medium text-gray-700 truncate max-w-[140px]">
               {userFullName}
             </span>
             <FontAwesomeIcon 
@@ -393,42 +417,41 @@ const Header: React.FC = () => {
 
           {dropdownOpen && (
             <div 
-              className="absolute top-full right-0 w-56 bg-white rounded-md shadow-lg border-[#3492d6]  z-50 border-2 border-gray-200" 
-              style={{ top: 'calc(100% + 8px)' }}
+              className="absolute top-full right-0 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50 mt-2"
             >
               <a 
                 href="#" 
-                className="flex items-center  px-4 py-2 text-sm text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
+                className="flex items-center px-4 py-3 text-base text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
                 onClick={(e) => {
                   e.preventDefault();
                   goToDashboard();
                 }}
               >
-                <FontAwesomeIcon icon={faChartBar} className="h-4 w-4 mr-2 text-blue-500" />
+                <FontAwesomeIcon icon={faChartBar} className="h-5 w-5 mr-3 text-blue-500" />
                 Tableau de bord
               </a>
               <a 
                 href="#" 
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
+                className="flex items-center px-4 py-3 text-base text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
                 onClick={(e) => {
                   e.preventDefault();
                   navigation('/dashboard/updateprofil');
                   setDropdownOpen(false);
                 }}
               >
-                <FontAwesomeIcon icon={faUserCircle} className="h-4 w-4 mr-2 text-blue-500" />
+                <FontAwesomeIcon icon={faUserCircle} className="h-5 w-5 mr-3 text-blue-500" />
                 Mon espace
               </a>
               <a 
                 href="#" 
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
+                className="flex items-center px-4 py-3 text-base text-gray-700 hover:bg-[#3492d6] hover:text-white transition-colors duration-200"
                 onClick={(e) => {
                   e.preventDefault();
                   handleLogout();
                   setDropdownOpen(false);
                 }}
               >
-                <FontAwesomeIcon icon={faSignOutAlt} className="h-4 w-4 mr-2 text-red-500" />
+                <FontAwesomeIcon icon={faSignOutAlt} className="h-5 w-5 mr-3 text-red-500" />
                 Déconnexion
               </a>
             </div>
@@ -440,13 +463,13 @@ const Header: React.FC = () => {
             text={"S'inscrire"}
             onClick={() => navigation("/role")}
             width={"w-40"}
-            className="h-[30px] rounded-md nav-btn"
+            className="h-[40px] rounded-md text-base"
           />
           <CustomButton
             text={"Se connecter"}
             onClick={() => navigation("/login")}
             width={"w-40"}
-            className="bg-white border border-primary text-primary rounded-md h-[30px] nav-btn"
+            className="bg-white border-2 border-primary text-primary rounded-md h-[40px] text-base"
           />
         </div>
       )}
