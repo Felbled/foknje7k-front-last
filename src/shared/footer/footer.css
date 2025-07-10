@@ -1,46 +1,48 @@
-.father-footerContainer {
-  display: flex;
-  flex-direction: column;
-}
-.footerContact {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-.fa {
-  color: #00795f;
-}
-.courses-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.courses-title p {
-  font-size: 25px;
-  color: rgb(2, 8, 75);
-}
-.footer-informations p {
-  font-weight: 500;
-  font-size: 17px;
-  transition: color 0.3s ease, transform 0.3s ease;
+
+.footer-link {
+  font-size: 15px;
+  transition: all 0.3s ease;
   cursor: pointer;
+  padding: 6px 0;
+  position: relative;
+  display: block;
 }
-.footer-informations p:hover {
-  color: #00795f;
+
+.footer-link:hover {
+   color: #03be96;
   transform: translateY(-2px);
-}
-.linkss a {
-  transition: color 0.3s ease, transform 0.3s ease;
   cursor: pointer;
 }
-.fb:hover {
-  color: rgb(10, 92, 193);
+
+.footer-link::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #a0f0d0;
+  transition: width 0.3s ease;
 }
-.ins:hover {
-  color: rgb(246, 69, 219);
+
+.footer-link:hover::before {
+  width: 100%;
 }
-.yt:hover {
-  color: red;
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
+
+.social-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+}
+
