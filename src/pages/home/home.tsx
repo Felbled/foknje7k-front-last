@@ -278,9 +278,9 @@ const Home: React.FC = () => {
   return (
     <div className="flex h-full pt-24">
       {/* Sidebar - grand écran */}
-      <aside className="h-screen hidden md:block">
+      <aside className="hidden h-screen md:block">
         <nav className="h-full flex flex-col bg-[#f2f9f7] border-b border-r border-[#09745f]"> 
-          <div className="p-4 flex justify-between items-center">
+          <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2 overflow-hidden">
               <FontAwesomeIcon
                 icon={faGraduationCap}
@@ -326,7 +326,7 @@ const Home: React.FC = () => {
       </aside>
 
       {/* Toggle sidebar bouton mobile */}
-      <div className="md:hidden absolute right-3 top-20">
+      <div className="absolute md:hidden right-3 top-20">
         <IconButton onClick={toggleSidebar}>
           <MenuOpenIcon />
         </IconButton>
@@ -340,8 +340,8 @@ const Home: React.FC = () => {
         className="sm:hidden"
         transitionDuration={{ enter: 500, exit: 500 }}
       >
-        <aside className="w-64 bg-white shadow-md p-4 h-full">
-          <h2 className="text-lg font-bold mb-4">Tableau de Bord</h2>
+        <aside className="w-64 h-full p-4 bg-white shadow-md">
+          <h2 className="mb-4 text-lg font-bold">Tableau de Bord</h2>
           <nav>
             <ul>
               {sidebarLinks.map(
@@ -379,23 +379,23 @@ const Home: React.FC = () => {
 
       {/* Contenu principal */}
       <main className="flex-1">
-        <div className="px-5 lg:px-10  h-full">
-          <div className="rounded-lg shadow-sm p-4 h-full">
-            <div className="px-4 md:px-12 flex flex-col items-center">
+        <div className="h-full px-5 lg:px-10">
+          <div className="h-full p-4 rounded-lg shadow-sm">
+            <div className="flex flex-col items-center px-4 md:px-12">
               <WelcomeCard />
              
-              <div className="pt-10 w-full flex flex-wrap justify-center mb-10">
+              <div className="flex flex-wrap justify-center w-full pt-10 mb-10">
                 {profileData.filter(item => item.active === true).map((item) => (
                   <div
                     key={item.id}
-                    className="relative w-full sm:w-1/2 lg:w-1/3 m-5 rounded-3xl overflow-hidden shadow-lg bg-white h-72"
+                    className="relative w-full m-5 overflow-hidden bg-white shadow-lg sm:w-1/2 lg:w-1/3 rounded-3xl h-72"
                   >
                     <div
-                      className="h-32 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${item.backgroundImageUrl})` }}
+                      className="h-32 bg-center bg-cover"
+                      style={{ backgroundImage: `url("${item.backgroundImageUrl}")` }}
                     ></div>
                     {(role === "ROLE_ADMIN" || role === "ROLE_SUPER_TEACHER") && (
-                      <div className="absolute top-2 right-2 bg-white rounded-full">
+                      <div className="absolute bg-white rounded-full top-2 right-2">
                         <IconButton onClick={(event) => handleClickMenu(event, item)}>
                           <MoreVertIcon />
                         </IconButton>
@@ -426,22 +426,22 @@ const Home: React.FC = () => {
                         </Menu>
                       </div>
                     )}
-                    <div className="flex justify-start items-end md:-mt-12 ms-5">
+                    <div className="flex items-end justify-start md:-mt-12 ms-5">
                       <img
-                        className="w-32 h-32 rounded-full border-4 object-cover border-white md:block hidden"
+                        className="hidden object-cover w-32 h-32 border-4 border-white rounded-full md:block"
                         src={item.mainImageUrl}
                         alt="Profile"
                       />
                       <div className="px-6 py-4">
-                        <div className="font-montserrat_semi_bold md:text-xl text-xs mb-2">
+                        <div className="mb-2 text-xs font-montserrat_semi_bold md:text-xl">
                           {item.title}
                         </div>
-                        <p className="text-title font-montserrat_regular md:text-base text-xs lowercase">
+                        <p className="text-xs lowercase text-title font-montserrat_regular md:text-base">
                           {getEducationLevelLabel(item.educationLevel)}
                         </p>
                       </div>
                     </div>
-                    <div className="w-full flex justify-center">
+                    <div className="flex justify-center w-full">
                       <CustomButton
                         onClick={() => navigation(`/subject/${item.id}`)}
                         text={"Rejoindre"}
@@ -449,18 +449,18 @@ const Home: React.FC = () => {
                         className={"text-xs"}
                       />
                     </div>
-                    <div className="w-full flex justify-end px-3">
-                      <p className="font-montserrat_semi_bold text-title text-lg">
+                    <div className="flex justify-end w-full px-3">
+                      <p className="text-lg font-montserrat_semi_bold text-title">
                         {item.superTeacherFullName}
                       </p>
                     </div>
                   </div>
                 ))}
                 {(role === "ROLE_ADMIN" || role === "ROLE_SUPER_TEACHER") && (
-                  <div className="flex items-center justify-center w-full sm:w-1/2 lg:w-1/3 m-5">
+                  <div className="flex items-center justify-center w-full m-5 sm:w-1/2 lg:w-1/3">
                     <div
                       onClick={() => handleOpenModal(null)}
-                      className="cursor-pointer bg-primary p-4 rounded-full h-20 w-20 flex items-center justify-center"
+                      className="flex items-center justify-center w-20 h-20 p-4 rounded-full cursor-pointer bg-primary"
                     >
                       <AddIcon className="text-white" style={{ fontSize: 50 }} />
                     </div>
@@ -483,7 +483,7 @@ const Home: React.FC = () => {
                 aria-describedby="alert-dialog-slide-description"
               >
                 <DialogTitle>
-                  <p className=" text-2xl font-montserrat_semi_bold text-title">
+                  <p className="text-2xl font-montserrat_semi_bold text-title">
                     {"Confirmer?"}
                   </p>
                 </DialogTitle>

@@ -9,6 +9,7 @@ import { FormModalProps } from "./offerModal";
 import { getUserGroupService } from "../services/group-service";
 import CustomSelect from "../shared/custom-select/custom-select";
 import { SnackbarContext } from "../config/hooks/use-toast";
+import { classesLevel } from "../mocks/education-level";
 
 interface FormData {
   image: string;
@@ -19,6 +20,7 @@ interface FormData {
   monthlyPeriod: number;
   offerDetails: string;
   classId: number | string;
+  requiredEducationLevel?: string;
 }
 
 const defaultData: FormData = {
@@ -30,8 +32,9 @@ const defaultData: FormData = {
   monthlyPeriod: 0,
   offerDetails: "",
   classId: "",
+  requiredEducationLevel: "",
 };
-
+  
 const OfferStudentModal: React.FC<FormModalProps> = ({
   open,
   onClose,
@@ -50,6 +53,10 @@ const OfferStudentModal: React.FC<FormModalProps> = ({
   const [groupOptions, setGroupOptions] = useState<
     { label: string; value: number }[]
   >([]);
+
+  const initialEducationLevel = classesLevel.find(
+    (level) => level.value === (initialData as FormData).requiredEducationLevel,
+  );
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -153,13 +160,13 @@ const OfferStudentModal: React.FC<FormModalProps> = ({
       aria-describedby="modal-description"
     >
       <Box className="bg-backgroundHome absolute top-10 left-1/2 transform -translate-x-1/2 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto shadow p-10">
-        <div className="w-full flex justify-center mb-5">
-          <h1 className="font-montserrat_semi_bold text-primary text-3xl">
+        <div className="flex justify-center w-full mb-5">
+          <h1 className="text-3xl font-montserrat_semi_bold text-primary">
             {modalTitle}
           </h1>
         </div>
 
-        <div className="w-full h-40 my-2 flex items-center justify-center bg-gray-200">
+        <div className="flex items-center justify-center w-full h-40 my-2 bg-gray-200">
           <label className="flex flex-col items-center cursor-pointer">
             {imageFile || sendeData.image ? (
               <img
@@ -167,7 +174,7 @@ const OfferStudentModal: React.FC<FormModalProps> = ({
                   imageFile ? URL.createObjectURL(imageFile) : sendeData.image
                 }
                 alt="Uploaded"
-                className="w-40 h-40 object-cover rounded-3xl"
+                className="object-cover w-40 h-40 rounded-3xl"
               />
             ) : (
               <div className="flex flex-col items-center cursor-pointer">
@@ -184,7 +191,7 @@ const OfferStudentModal: React.FC<FormModalProps> = ({
           </label>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <CustomInput
             label="Title"
             inputType="text"
@@ -234,8 +241,17 @@ const OfferStudentModal: React.FC<FormModalProps> = ({
             onChange={handleSelectChange}
             name="classId"
           />
+          <CustomSelect
+            label="Education Level"
+            placeholder={"Select Education Level"}
+            customStyle="me-3"
+            options={classesLevel}
+            value={sendeData.requiredEducationLevel || initialEducationLevel?.value}
+            onChange={handleSelectChange}
+            name="requiredEducationLevel"
+          />
           <div className="w-full">
-            <div className="w-full flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
               <CustomInput
                 label="Add Benefit"
                 inputType="text"
@@ -253,7 +269,7 @@ const OfferStudentModal: React.FC<FormModalProps> = ({
               {benefits.map((benefit, index) => (
                 <li
                   key={index}
-                  className="flex items-center border rounded border-primary mb-5 mx-1 px-2"
+                  className="flex items-center px-2 mx-1 mb-5 border rounded border-primary"
                 >
                   <span className={"font-montserrat_regular text-title"}>
                     {benefit}
@@ -270,7 +286,7 @@ const OfferStudentModal: React.FC<FormModalProps> = ({
           </div>
         </div>
 
-        <div className="w-full flex justify-center">
+        <div className="flex justify-center w-full">
           <CustomButton text={buttonText} onClick={handleActionClick} />
         </div>
       </Box>

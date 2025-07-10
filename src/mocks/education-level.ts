@@ -55,6 +55,7 @@ export const classesLevel = [
   { value: "BAC_INFORMATIQUE", label: "Bac Informatique" },
   { value: "BAC_ECONOMIE_GESTION", label: "Bac Économie et Gestion" },
   { value: "BAC_TECHNIQUE", label: "Bac Technique" },
+  { value: "FORMATION_PROFESSIONNELLE", label: "Formation Professionnelle" },
 ];
 export const regions = [
   { value: "TUNIS", label: "Tunis" },

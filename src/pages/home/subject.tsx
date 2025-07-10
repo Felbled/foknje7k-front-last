@@ -196,21 +196,21 @@ const Subject: React.FC = () => {
   };
 
   return (
-    <div className="pt-20 px-4 md:px-12 flex flex-col items-center">
+    <div className="flex flex-col items-center px-4 pt-20 md:px-12">
       <WelcomeCard />
      
-      <div className="w-full flex flex-wrap justify-center my-10">
+      <div className="flex flex-wrap justify-center w-full my-10">
         {subjects.map((item) => (
           <div
             key={item.id}
-            className="relative  w-full sm:w-1/2 md:w-1/3 lg:w-1/4 m-4 rounded-3xl overflow-hidden shadow-lg bg-white h-96"
+            className="relative w-full m-4 overflow-hidden bg-white shadow-lg sm:w-1/2 md:w-1/3 lg:w-1/4 rounded-3xl h-96"
           >
             <div
-              className="h-32 bg-cover bg-center"
-              style={{ backgroundImage: `url(${item.backgroundImageUrl})` }}
+              className="h-32 bg-center bg-cover"
+              style={{ backgroundImage: `url("${item.backgroundImageUrl}")` }}
             ></div>
             {(role === "ROLE_ADMIN" || role === "ROLE_SUPER_TEACHER") && (
-              <div className="absolute top-2 right-2 bg-white rounded-full">
+              <div className="absolute bg-white rounded-full top-2 right-2">
                 <IconButton onClick={(event) => handleClickMenu(event, item)}>
                   <MoreVertIcon />
                 </IconButton>
@@ -234,23 +234,23 @@ const Subject: React.FC = () => {
                 </Menu>
               </div>
             )}
-            <div className="flex justify-left items-end -mt-6 p-2 ">
+            <div className="flex items-end p-2 -mt-6 justify-left ">
               <img
-                className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 object-cover border-white"
+                className="object-cover w-20 h-20 border-4 border-white rounded-full md:w-28 md:h-28"
                 src={item.mainImageUrl}
                 alt="Profile"
               />
               <div className="px-3 py-5">
-                <p className="text-title text-base md:text-lg font-montserrat_semi_bold">
+                <p className="text-base text-title md:text-lg font-montserrat_semi_bold">
                   {item.level}
                 </p>
-                <p className="text-title text-sm md:text-base font-montserrat_medium">
+                <p className="text-sm text-title md:text-base font-montserrat_medium">
                   {item.speciality}
                 </p>
               </div>
             </div>
-            <div className="w-full flex ps-5 items-center justify-left flex-wrap  px-2">
-              <p className="md:text-base text-sm font-montserrat_regular pe-5 text-text ">
+            <div className="flex flex-wrap items-center w-full px-2 ps-5 justify-left">
+              <p className="text-sm md:text-base font-montserrat_regular pe-5 text-text ">
                 Section:
               </p>
               {item.sections.map(
@@ -263,7 +263,7 @@ const Subject: React.FC = () => {
                 ) => (
                   <div
                     key={index}
-                    className="m-1 px-3 w-min text-center py-1 rounded-xl text-white text-nowrap md:text-base text-sm"
+                    className="px-3 py-1 m-1 text-sm text-center text-white w-min rounded-xl text-nowrap md:text-base"
                     style={{ backgroundColor: section.sectionColor }}
                   >
                     {section.sectionName}
@@ -271,7 +271,7 @@ const Subject: React.FC = () => {
                 ),
               )}
             </div>
-            <div className="w-full flex justify-center px-3 pt-2 text-sm text-white">
+            <div className="flex justify-center w-full px-3 pt-2 text-sm text-white">
               <CustomButton
                 onClick={() => navigate(`/subject-details?id=${item.id}`)}
                 text={"Rejoindre"}
@@ -280,17 +280,17 @@ const Subject: React.FC = () => {
               />
             </div>
             <div className="w-full flex justify-end px-3 position: absolute bottom-2.5 -left-3">
-              <p className="font-montserrat_semi_bold text-title text-base">
+              <p className="text-base font-montserrat_semi_bold text-title">
                 {item.superTeacherFullName}
               </p>
             </div>
           </div>
         ))}
         {(role === "ROLE_ADMIN" || role === "ROLE_SUPER_TEACHER") && (
-          <div className="flex items-center justify-center w-full sm:w-1/2 md:w-1/3 lg:w-1/4 m-4">
+          <div className="flex items-center justify-center w-full m-4 sm:w-1/2 md:w-1/3 lg:w-1/4">
             <div
               onClick={() => handleOpenModal(null)}
-              className="cursor-pointer bg-primary p-4 rounded-full h-20 w-20 flex items-center justify-center"
+              className="flex items-center justify-center w-20 h-20 p-4 rounded-full cursor-pointer bg-primary"
             >
               <AddIcon className="text-white" style={{ fontSize: 50 }} />
             </div>
