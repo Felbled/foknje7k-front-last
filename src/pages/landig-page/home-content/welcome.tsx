@@ -1,50 +1,39 @@
 import React from "react";
 import "./welcome.css";
-import { Home1, Home2 } from "../../../assets/images";
 import { RoundedImage1, RoundedImage2 } from "../../../assets/images";
 
 const Welcome = () => {
   return (
-    <div className="container" id="home">
-      <div className="left">
-        <div className="Badge">N'arrêtez jamais d'apprendre</div>
-        <div className="max-w-xl text-container">
-          <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-4 text-white">
+    <div className="welcome-container" id="home">
+      <div className="welcome-content">
+        <div className="welcome-badge">N'arrêtez jamais d'apprendre</div>
+        
+        <div className="welcome-text">
+          <h1>
             Développez vos compétences <br />
-            avec <span className="text-white">FOK NJE7IK</span>
+            avec <span className="highlight">FOK NJE7IK</span>
           </h1>
-          <p className="text-[12.45px]  leading-relaxed text-[#dddddd]">
+          <p>
             FOK NJE7IK est une plateforme basée à travers la Tunisie spécialisée
-          </p>
-          <p className="text-[12.45px]  leading-relaxed text-[#dddddd]">
             dans les formations accréditées et sur mesure. Nous brisons les
-          </p>
-
-          <p className="text-[12.45px]  leading-relaxed text-[#dddddd]">
             barrières pour obtenir un diplôme
           </p>
         </div>
       </div>
-      <div className="right ">
-        {/* Images circulaires */}
-        <div
-          className="image-wrapper-bottom  w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg"
-          style={{ width: "221px", height: "221px" }}
-        >
+      
+      <div className="welcome-images">
+        <div className="circle-image-wrapper bottom-image">
           <img
             src={RoundedImage2}
             alt="Enseignante avec élève"
-            className="w-full h-full object-cover"
+            className="circle-image"
           />
         </div>
-        <div
-          className="image-wrapper-top w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg"
-          style={{ width: "258px", height: "258px" }}
-        >
+        <div className="circle-image-wrapper top-image">
           <img
             src={RoundedImage1}
             alt="Professeur et étudiant"
-            className="w-full h-full object-cover "
+            className="circle-image"
           />
         </div>
       </div>
