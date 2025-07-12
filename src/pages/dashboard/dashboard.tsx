@@ -288,8 +288,8 @@ const Dashboard = () => {
                         className={({ isActive }) =>
                           `block p-2 rounded ps-12 font-montserrat_medium ${
                             isActive
-                              ? "bg-gradient-to-tr from-[#09745f] via-[#041b8c] to-[#07b98e] text-white"
-                              : "hover:bg-[#bda2eb] text-gray-600"
+                              ? "bg-[#09745f] text-white"
+                              : "hover:bg-[#60eb98] text-gray-600"
                           }`
                         }
                       >

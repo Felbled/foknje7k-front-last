@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, MouseEvent } from "react";
 import {
   Button,
   Dialog,
@@ -37,9 +37,48 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
   const role = useSelector(
     (state: RootState) => state?.user?.userData?.role.name,
   );
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  
+  
+  const isFreeOffer = offer.price === 0;
 
-  const handleClick = (event: { currentTarget: any }) => {
+  
+  const themeColors = {
+    free: {
+      border: "#3B82F6",        
+      title: "#1D4ED8",         
+      subTitle: "#60A5FA",      
+      price: "#2563EB",         
+      priceBg: "#DBEAFE",       
+      badgeBg: "#DBEAFE",       
+      badgeText: "#1E40AF",   
+      check: "#3B82F6",        
+      icon: "#3B82F6",          
+      buttonStart: "#3B82F6",   
+      buttonEnd: "#2563EB",     
+      buttonHoverStart: "#2563EB", 
+      buttonHoverEnd: "#3B82F6",   
+    },
+    paid: {
+      border: "#10B981",        
+      title: "#047857",         
+      subTitle: "#34D399",      
+      price: "#059669",         
+      priceBg: "#D1FAE5",       
+      badgeBg: "#D1FAE5",       
+      badgeText: "#065F46",     
+      check: "#10B981",        
+      icon: "#10B981",          
+      buttonStart: "#10B981",  
+      buttonEnd: "#059669",    
+      buttonHoverStart: "#059669", 
+      buttonHoverEnd: "#10B981",   
+    }
+  };
+
+  const colors = isFreeOffer ? themeColors.free : themeColors.paid;
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -132,38 +171,54 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
     }
   };
 
-  // Debug log for offer subscription state
-  console.log('OFFER DEBUG:', {
-    id: offer?.id,
-    title: offer?.title,
-    price: offer?.price,
-    subscribed: offer?.subscribed,
-    userRole: role,
-    isOfferStudent,
-  });
-
   return (
-    <div className="flex flex-col justify-between bg-white shadow-md overflow-hidden w-full sm:w-80 p-4 sm:p-8 h-auto sm:h-[65vh] rounded-3xl">
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <img
-              src={offer?.imageUrl}
-              alt={offer.title}
-              className="object-cover w-12 h-12 shadow rounded-xl"
-            />
-            <div className="ml-4">
-              <h2 className="text-text font-montserrat_regular">
-                {offer.title}
-              </h2>
-              <p className="text-xl text-title font-montserrat_medium">
-                {offer.subTitle}
-              </p>
-            </div>
+    <div 
+      className="flex flex-col justify-between bg-white shadow-xl rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] w-full max-w-sm h-full"
+      style={{ borderTop: `4px solid ${colors.border}` }}
+    >
+      <div className="w-full h-48 overflow-hidden">
+        <img
+          src={offer?.imageUrl || "https://via.placeholder.com/300x192?text=Offre"}
+          alt={offer.title}
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+        />
+      </div>
+
+      {offer.subscribed && (
+        <div 
+          className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold"
+          style={{ 
+            backgroundColor: colors.badgeBg,
+            color: colors.badgeText
+          }}
+        >
+          Abonné
+        </div>
+      )}
+
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 
+              className="text-xl font-bold mb-1"
+              style={{ color: colors.title }}
+            >
+              {offer.title}
+            </h2>
+            <p 
+              className="font-medium"
+              style={{ color: colors.subTitle }}
+            >
+              {offer.subTitle}
+            </p>
           </div>
+          
           {role === "ROLE_ADMIN" && (
             <div>
-              <IconButton onClick={handleClick}>
+              <IconButton 
+                onClick={handleClick} 
+                style={{ color: colors.icon }}
+              >
                 <MoreVertIcon />
               </IconButton>
               <Menu
@@ -179,51 +234,96 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
                   horizontal: "right",
                 }}
               >
-                <MenuItem onClick={handleOpenModal}>Edit</MenuItem>
-                <MenuItem onClick={handleClickAlert}>Delete</MenuItem>
+                <MenuItem onClick={handleOpenModal}>Modifier</MenuItem>
+                <MenuItem onClick={handleClickAlert}>Supprimer</MenuItem>
               </Menu>
             </div>
           )}
         </div>
-        <div className="py-4">
-          <p className="mb-2 text-sm text-text font-montserrat_regular">
-            {offer.description}
-          </p>
-          <div className="flex items-end">
-            <p className="text-3xl font-montserrat_bold">{offer.price} DT</p>
-            <p className="ml-1 text-text font-montserrat_regular">
-              / {offer.monthlyPeriod} Mois
-            </p>
+
+        <p className="text-gray-600 mb-4 text-sm">
+          {offer.description}
+        </p>
+
+        <div className="mb-6 flex flex-col">
+          <div 
+            className="py-3 px-4 rounded-xl mb-3 flex items-center justify-between"
+            style={{ backgroundColor: colors.priceBg }}
+          >
+            <span className="text-lg font-medium text-gray-700">Prix total</span>
+            <div className="flex items-baseline">
+              <span 
+                className="text-4xl font-bold"
+                style={{ color: colors.price }}
+              >
+                {offer.price}
+              </span>
+              <span 
+                className="text-xl ml-1 font-medium"
+                style={{ color: colors.price }}
+              >
+                DT
+              </span>
+            </div>
           </div>
-          <p className="mt-2 font-montserrat_semi_bold">Ce qui est inclu</p>
-          <div className="mt-2">
+          
+          {isFreeOffer && (
+            <div className="bg-blue-100 text-blue-800 text-center py-2 rounded-lg mb-4">
+              Offre 100% gratuite - Aucun paiement requis
+            </div>
+          )}
+        </div>
+
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+            Ce que vous obtenez
+          </h3>
+          
+          <div className="space-y-3">
             {benefitsArray.map((benefit: any, index: React.Key) => (
-              <div className="flex mb-2" key={index}>
-                <CheckCircleIcon className="mr-3 text-primary" />
-                <p className="text-title font-montserrat_regular">{benefit}</p>
+              <div 
+                className="flex items-start"
+                key={index}
+              >
+                <CheckCircleIcon 
+                  style={{ color: colors.check }} 
+                  className="mt-1 mr-3 flex-shrink-0" 
+                />
+                <p className="text-gray-700">{benefit}</p>
               </div>
             ))}
           </div>
         </div>
-      </div>
 
-      <div className="flex justify-center w-full my-3">
         {(!offer.subscribed && role !== "ROLE_ADMIN") && (
-          <CustomButton
-            text="Commencer"
-            width="w-full sm:w-2/3"
-            className="text-white rounded-6xl"
+          <div
+            className="w-full text-white py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer text-center"
+            style={{
+              background: `linear-gradient(to right, ${colors.buttonStart}, ${colors.buttonEnd})`,
+              backgroundSize: '200% auto',
+              transition: 'background-position 0.5s',
+            }}
+            onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
+              e.currentTarget.style.background = `linear-gradient(to right, ${colors.buttonHoverStart}, ${colors.buttonHoverEnd})`;
+            }}
+            onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
+              e.currentTarget.style.background = `linear-gradient(to right, ${colors.buttonStart}, ${colors.buttonEnd})`;
+            }}
             onClick={onclick}
-          />
+          >
+            {isFreeOffer ? "Rejoindre gratuitement" : "Souscrire maintenant"}
+          </div>
         )}
       </div>
+
+      {/* Modals */}
       {isOfferStudent ? (
         <OfferStudentModal
           open={isModalOpen}
           onClose={handleCloseModal}
           initialData={{ image: offer.imageUrl, ...offer }}
-          modalTitle="Edit Item"
-          buttonText="Update"
+          modalTitle="Modifier l'offre"
+          buttonText="Mettre à jour"
           onButtonClick={handleAction}
         />
       ) : (
@@ -231,11 +331,12 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           open={isModalOpen}
           onClose={handleCloseModal}
           initialData={{ image: offer.imageUrl, ...offer }}
-          modalTitle="Edit Item"
-          buttonText="Update"
+          modalTitle="Modifier l'offre"
+          buttonText="Mettre à jour"
           onButtonClick={handleAction}
         />
       )}
+      
       <Dialog
         open={open}
         keepMounted
@@ -243,30 +344,32 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
         aria-describedby="alert-dialog-slide-description"
       >
         <DialogTitle>
-          <p className="text-2xl font-montserrat_semi_bold text-title">
-            {"Confirmer?"}
+          <p className="text-2xl font-bold text-gray-800">
+            Confirmer la suppression
           </p>
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-slide-description">
-            <p className="font-montserrat_medium text-text">
-              Vous êtes sûr de supprimer cetter Offre?
+            <p className="text-gray-600">
+              Êtes-vous sûr de vouloir supprimer cette offre? Cette action est irréversible.
             </p>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <CustomButton
-            text={"Annuler"}
-            className={"bg-text text-white"}
-            width={"w-32"}
+          <Button
+            variant="outlined"
             onClick={handleCloseAlert}
-          />
-          <CustomButton
-            text={"Supprimer"}
-            className={"bg-red text-white"}
-            width={"w-32"}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
             onClick={handleDelete}
-          />
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Supprimer
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

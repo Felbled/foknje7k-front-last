@@ -16,8 +16,8 @@ import {
 import "./footer.css";
 const Footer = () => {
   return (
-    <div className="footerContainer w-full shadow-lg	 bg-[#f9f6f1] pt-7 pb-3 px-4 sm:px-6 md:px-12 lg:px-24">
-      <div className="max-w-7xl mx-auto">
+    <div className="footerContainer w-full shadow-lg	 bg-[#f9f6f1] pt-7 pb-3 px-4 sm:px-6 md:px-12 lg:px-24"  style={{ boxShadow: "0 -8px 15px -4px rgba(0, 0, 0, 0.2)" }}>
+      <div className="max-w-7xl mx-auto ">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           <div className="flex flex-col items-center md:items-start space-y-6">
             <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">

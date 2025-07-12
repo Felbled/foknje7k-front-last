@@ -8,7 +8,7 @@ interface ContentItem {
   content: Array<{
     title: string;
     description: string;
-    image?: string; // Optional local image
+    image?: string; 
   }>;
 }
 

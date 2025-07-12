@@ -1,4 +1,3 @@
-/* welcome.css */
 body {
   background-color: #f9f6f1;
 }
@@ -16,8 +15,7 @@ body {
   min-height: 85vh;
   overflow: hidden;
   color: white;
-  /* Positionnement fixe sous la navigation */
-  margin-top: 100px; /* 100px sous la nav */
+  margin-top: 100px; 
 }
 
 .welcome-content {
@@ -31,15 +29,14 @@ body {
   background-color: white;
   color: #019570;
   border-radius: 40px;
-  padding: 0.5rem 1.2rem;
-  font-size: 0.9rem;
+  padding: 0.1rem 1.2rem;
+  font-size: 1.1rem;
   display: inline-block;
   margin-bottom: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-  /* Positionnement fixe en haut */
   position: absolute;
-  top: 100px; /* 100px sous la nav */
+  top: 100px; 
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -50,11 +47,11 @@ body {
   font-weight: 800;
   margin-bottom: 1.5rem;
   line-height: 1.3;
-  margin-top: 40px; /* Espace pour le badge */
+  margin-top: 40px; 
 }
 
 .highlight {
-  color: #019570;
+  color: #00ffcc;
   position: relative;
 }
 
@@ -65,7 +62,7 @@ body {
   left: 0;
   width: 100%;
   height: 3px;
-  background: #019570;
+  background: #00ffcc;
   border-radius: 3px;
 }
 
@@ -122,7 +119,6 @@ body {
   z-index: 2;
 }
 
-/* Media Queries pour le responsive */
 @media (max-width: 480px) {
   .welcome-container {
     margin-top: 80px;

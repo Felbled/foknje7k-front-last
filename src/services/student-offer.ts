@@ -10,6 +10,7 @@ export const createStudentOfferService = async (data: any) => {
   });
   return response.data;
 };
+
 export const updateStudentOfferService = async (id: number, data: any) => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `offers/student/${id}`,
@@ -20,6 +21,7 @@ export const updateStudentOfferService = async (id: number, data: any) => {
   });
   return response.data;
 };
+
 export const getAllStudentOfferService = async () => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `offers/student`,
@@ -29,6 +31,7 @@ export const getAllStudentOfferService = async () => {
   });
   return response.data;
 };
+
 export const getStudentOfferService = async (id: number) => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `offers/student/${id}`,
@@ -38,6 +41,7 @@ export const getStudentOfferService = async (id: number) => {
   });
   return response.data;
 };
+
 export const deleteStudentOfferService = async (id: number) => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `offers/student/${id}`,
@@ -47,16 +51,9 @@ export const deleteStudentOfferService = async (id: number) => {
   });
   return response.data;
 };
-export const sendOfferService = async (id: number, data: any) => {
-  const response = await NetworkService.getInstance().sendHttpRequest({
-    url: `offers/student-request/${id}`,
-    method: "POST",
-    withLoader: true,
-    withFailureLogs: false,
-    data: data,
-  });
-  return response.data;
-};
+
+
+
 export const respondOfferService = async (
   id: number,
   status: "ACCEPTED" | "REJECTED",
@@ -70,6 +67,7 @@ export const respondOfferService = async (
   });
   return response.data;
 };
+
 export const getAllStudentRequests = async () => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `offers/student-requests`,
@@ -79,12 +77,34 @@ export const getAllStudentRequests = async () => {
   });
   return response.data;
 };
+
 export const getAllStudentCurrentRequests = async () => {
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: `offers/student/current-requests`,
     method: "GET",
     withLoader: true,
     withFailureLogs: false,
+  });
+  return response.data;
+};
+
+//student-offers+matiers(get+post)
+export const getAvailableSubjects = async () => {
+  const response = await NetworkService.getInstance().sendHttpRequest({
+    url: `subjects`,
+    method: "GET",
+    withLoader: true,
+    withFailureLogs: false,
+  });
+  return response.data;
+};
+export const sendOfferService = async (id: number, data: any) => {
+  const response = await NetworkService.getInstance().sendHttpRequest({
+    url: `offers/student-request/${id}`,
+    method: "POST",
+    withLoader: true,
+    withFailureLogs: false,
+    data: data,
   });
   return response.data;
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import "./welcome.css";
 import { RoundedImage1, RoundedImage2 } from "../../../assets/images";
+import { color } from "framer-motion";
 
 const Welcome = () => {
   return (
@@ -11,7 +12,7 @@ const Welcome = () => {
         <div className="welcome-text">
           <h1>
             Développez vos compétences <br />
-            avec <span className="highlight">FOK NJE7IK</span>
+              <span className="highlight" style={{ color: "#00ffcc" }}>FOK NJE7IK</span>
           </h1>
           <p>
             FOK NJE7IK est une plateforme basée à travers la Tunisie spécialisée

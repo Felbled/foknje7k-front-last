@@ -13,7 +13,6 @@ const Landing = () => {
       <Service />
       <Classes />
       <Inscription />
-     
       <Newsletter />
     </div>
   );

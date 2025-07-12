@@ -1,32 +1,42 @@
 import React from "react";
-import { BlackUser } from "../../../assets/images";
-import CustomButton from "../../../shared/custom-button/custom-button";
 import { useNavigate } from "react-router-dom";
+import { girl } from "../../../assets/images";
 import "./inscription.css";
-import { backinscription, girl } from "../../../assets/images";
 
 const Inscription = () => {
-  const navigation = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <div className="hero-section">
       <div className="hero-content">
-        <div className="image-wrapper">
-          <img src={girl} alt="fille étudiant" className="girl-image" />
+        <div className="image-container">
+          <div className="green-circle">
+            <div className="image-wrapper">
+              <img 
+                src={girl} 
+                alt="Étudiante souriante avec ordinateur portable" 
+                className="girl-image"
+                loading="lazy"
+              />
+            </div>
+          </div>
         </div>
+        
         <div className="text-content">
           <h1>
-            Ne perdez pas de temps cet Été.
+            Ne perdez pas de temps cet Été
             <br />
-            <span className="highlight">Développer tes compétences</span>
+            <span className="highlight">Développez vos compétences</span>
           </h1>
           <p>
             Profitez de votre temps libre pour apprendre de nouvelles
             compétences ou approfondir vos connaissances
           </p>
+          
           <button
             className="cta-button"
-            onClick={() => navigation("/register-student")}
+            onClick={() => navigate("/register-student")}
+            aria-label="S'inscrire maintenant"
           >
             S’inscrire maintenant
           </button>
