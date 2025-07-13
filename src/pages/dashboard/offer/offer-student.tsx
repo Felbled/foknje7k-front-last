@@ -132,7 +132,7 @@ const OfferStudent = () => {
 
   const handleOfferClick = (offer: any) => {
     setSelectedOffer(offer);
-    
+    // For free offers, do not show subject selection or send subjectsId
     if (offer.price === 0) {
       setIsConfirmModal(true);
     } else {
@@ -387,7 +387,8 @@ const OfferStudent = () => {
               className="w-full h-10 text-white rounded-md bg-primary sm:w-1/3"
               text={"Confirmer"}
               onClick={() => {
-                sendOfferService(selectedOffer.id, {})
+                // For free offers, send subjectIds as empty string in query params
+                sendOfferService(selectedOffer.id, {}, "")
                   .then(() => {
                     fetchData();
                     setIsConfirmModal(false);
@@ -571,3 +572,4 @@ const OfferStudent = () => {
 };
 
 export default OfferStudent;
+

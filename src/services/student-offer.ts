@@ -52,8 +52,6 @@ export const deleteStudentOfferService = async (id: number) => {
   return response.data;
 };
 
-
-
 export const respondOfferService = async (
   id: number,
   status: "ACCEPTED" | "REJECTED",
@@ -98,9 +96,12 @@ export const getAvailableSubjects = async () => {
   });
   return response.data;
 };
-export const sendOfferService = async (id: number, data: any) => {
+export const sendOfferService = async (id: number, data: any, subjectIds?: string) => {
+  const url = subjectIds !== undefined
+    ? `offers/student-request/${id}?subjectIds=${subjectIds}`
+    : `offers/student-request/${id}`;
   const response = await NetworkService.getInstance().sendHttpRequest({
-    url: `offers/student-request/${id}`,
+    url: url,
     method: "POST",
     withLoader: true,
     withFailureLogs: false,
