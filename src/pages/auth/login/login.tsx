@@ -162,21 +162,21 @@ const Login = () => {
           error={!!errors.password}
           errorMessage={errors.password}
         />
-        <div className="flex w-full justify-between mb-5">
+        <div className="flex justify-between w-full mb-5">
           <label className={`flex items-center space-x-3`}>
             <input
               type="checkbox"
               checked={isChecked}
               onChange={handleCheckboxChange}
-              className="form-checkbox me-1 h-4 w-4 accent-primary border-primary rounded "
+              className="w-4 h-4 rounded form-checkbox me-1 accent-primary border-primary "
             />
-            <span className="text-title text-xs font-montserrat_regular">
+            <span className="text-xs text-title font-montserrat_regular">
               Garde-moi connecté
             </span>
           </label>
           <p
             onClick={() => navigation("/forget-password")}
-            className="text-text text-xs font-montserrat_medium cursor-pointer"
+            className="text-xs cursor-pointer text-text font-montserrat_medium"
           >
             Mot de passe oublié ?
           </p>
@@ -186,6 +186,17 @@ const Login = () => {
           className={"w-full h-14 mt-6"}
           onClick={() => handleSubmit()}
         />
+        <div className="mt-4 text-center">
+          <span className="text-sm text-title font-montserrat_regular">
+            Vous n'avez pas de compte ?{" "}
+          </span>
+          <span
+            onClick={() => navigation("/role")}
+            className="text-sm cursor-pointer text-primary font-montserrat_medium hover:underline"
+          >
+            Créer un compte
+          </span>
+        </div>
       </form>
     </AuthLayout>
   );

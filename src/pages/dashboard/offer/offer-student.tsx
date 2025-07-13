@@ -2,17 +2,13 @@ import React, { useContext, useEffect, useState } from "react";
 import { RootState } from "../../../redux/store/store";
 import {
   Button,
-  Card,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
   Typography,
-  Checkbox,
-  FormControlLabel,
   IconButton,
-  DialogContentText,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CustomButton from "../../../shared/custom-button/custom-button";
@@ -28,6 +24,7 @@ import OfferStudentModal from "../../../componet/offer-student-modal";
 import {
   createStudentOfferService,
   getAllStudentOfferService,
+  getStudentOfferService,
   sendOfferService,
 } from "../../../services/student-offer";
 import { getAllUserByRole } from "../../../services/super-teacher";
@@ -50,17 +47,8 @@ const OfferStudent = () => {
   const [filterText, setFilterText] = useState("");
   
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [availableSubjects] = useState<string[]>([
-    "Mathématiques",
-    "Physique/chimie",
-    "Sciences",
-    "Informatique",
-    "Option(Allemand/Espanol/Italien)",
-    "Arabe",
-    "Francais",
-    "Anglais"
-  ]);
+  const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
+  const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   
   const snackbarContext = useContext(SnackbarContext);
@@ -99,7 +87,7 @@ const OfferStudent = () => {
           console.log(e);
         });
     }
-  }, []);
+  }, [role]);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -132,26 +120,44 @@ const OfferStudent = () => {
 
   const handleOfferClick = (offer: any) => {
     setSelectedOffer(offer);
-    // For free offers, do not show subject selection or send subjectsId
-    if (offer.price === 0) {
-      setIsConfirmModal(true);
-    } else {
-      setIsSubjectModalOpen(true);
-      setSelectedSubjects([]); 
-      setPaymentFile(null); 
-    }
+    
+    // Fetch detailed offer information including subjects
+    getStudentOfferService(offer.id)
+      .then((res) => {
+        const offerDetails = res.data;
+        
+        // Set available subjects from the API response
+        if (offerDetails.subjects && offerDetails.subjects.length > 0) {
+          setAvailableSubjects(offerDetails.subjects);
+        }
+        
+        // For free offers, do not show subject selection
+        if (offer.price === 0) {
+          setIsConfirmModal(true);
+        } else {
+          setIsSubjectModalOpen(true);
+          setSelectedSubjects([]); 
+          setPaymentFile(null); 
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+        // Fallback: still show modal even if API fails
+        if (offer.price === 0) {
+          setIsConfirmModal(true);
+        } else {
+          setIsSubjectModalOpen(true);
+          setSelectedSubjects([]); 
+          setPaymentFile(null); 
+        }
+      });
   };
 
-  const handleBackToMainView = () => {
-    setIsConfirmModal(false);
-    setSelectedOffer(null);
-  };
-
-  const handleSubjectToggle = (subject: string) => {
-    if (selectedSubjects.includes(subject)) {
-      setSelectedSubjects(selectedSubjects.filter((s) => s !== subject));
+  const handleSubjectToggle = (subjectId: number) => {
+    if (selectedSubjects.includes(subjectId)) {
+      setSelectedSubjects(selectedSubjects.filter((id) => id !== subjectId));
     } else {
-      setSelectedSubjects([...selectedSubjects, subject]);
+      setSelectedSubjects([...selectedSubjects, subjectId]);
     }
   };
 
@@ -173,9 +179,6 @@ const OfferStudent = () => {
 
     const formData = new FormData();
     
-    // Ajouter les matières sélectionnées
-    formData.append("subjects", JSON.stringify(selectedSubjects));
-    
     // Calculer le prix total
     const totalPrice = selectedSubjects.length * 40;
     formData.append("totalPrice", totalPrice.toString());
@@ -185,9 +188,18 @@ const OfferStudent = () => {
       formData.append("paymentImage", paymentFile);
     }
 
-    sendOfferService(selectedOffer.id, formData)
+    // Send subject IDs as query parameter
+    const subjectIdsParam = selectedSubjects.join(',');
+
+    sendOfferService(selectedOffer.id, formData, subjectIdsParam)
       .then((res) => {
         setIsSubjectModalOpen(false);
+        // Reset states
+        setSelectedSubjects([]);
+        setAvailableSubjects([]);
+        setPaymentFile(null);
+        setSelectedOffer(null);
+        
         if (snackbarContext) {
           snackbarContext.showMessage(
             "Succes",
@@ -206,6 +218,15 @@ const OfferStudent = () => {
           );
         }
       });
+  };
+
+  const handleCloseSubjectModal = () => {
+    setIsSubjectModalOpen(false);
+    // Reset states when closing modal
+    setSelectedSubjects([]);
+    setAvailableSubjects([]);
+    setPaymentFile(null);
+    setSelectedOffer(null);
   };
 
   const groupedSrcList: any[] = data.reduce(
@@ -234,54 +255,66 @@ const OfferStudent = () => {
       {/* Popup de sélection des matières */}
       <Dialog
         open={isSubjectModalOpen}
-        onClose={() => setIsSubjectModalOpen(false)}
+        onClose={handleCloseSubjectModal}
         fullWidth
         maxWidth="md"
         PaperProps={{
           style: { borderRadius: 16, overflow: "hidden" },
         }}
       >
-        <DialogTitle className="bg-primary text-white flex justify-between items-center">
-          <span className="font-montserrat_semi_bold text-xl">
+        <DialogTitle className="flex items-center justify-between text-white bg-primary">
+          <span className="text-xl font-montserrat_semi_bold">
             Sélectionnez vos matières
           </span>
-          <IconButton onClick={() => setIsSubjectModalOpen(false)} className="text-white">
+          <IconButton onClick={handleCloseSubjectModal} className="text-white">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         
-        <DialogContent className="py-6 px-4">
+        <DialogContent className="px-4 py-6">
           <div className="mb-6">
-            <Typography variant="h6" className="font-montserrat_medium mb-3">
+            <Typography variant="h6" className="mb-3 font-montserrat_medium">
               Choisissez les matières que vous souhaitez étudier (40 DT/matière)
             </Typography>
             
             <div className="grid grid-cols-2 gap-4">
-              {availableSubjects.map((subject) => (
-                <div 
-                  key={subject} 
-                  className={`p-4 rounded-lg border-2 cursor-pointer flex items-center justify-between ${
-                    selectedSubjects.includes(subject)
-                      ? "border-primary bg-blue-50"
-                      : "border-gray-200"
-                  }`}
-                  onClick={() => handleSubjectToggle(subject)}
-                >
-                  <span className="font-montserrat_medium">{subject}</span>
-                  {selectedSubjects.includes(subject) && (
-                    <CheckCircleOutlineIcon className="text-primary" />
-                  )}
+              {availableSubjects.length > 0 ? (
+                availableSubjects.map((subject) => (
+                  <div 
+                    key={subject.id} 
+                    className={`p-4 rounded-lg border-2 cursor-pointer flex items-center justify-between ${
+                      selectedSubjects.includes(subject.id)
+                        ? "border-primary bg-blue-50"
+                        : "border-gray-200"
+                    }`}
+                    onClick={() => handleSubjectToggle(subject.id)}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-montserrat_medium">{subject.speciality}</span>
+                      <span className="text-sm text-gray-500">Niveau {subject.level}</span>
+                      <span className="text-xs text-gray-400">Par {subject.superTeacherFullName}</span>
+                    </div>
+                    {selectedSubjects.includes(subject.id) && (
+                      <CheckCircleOutlineIcon className="text-primary" />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="flex items-center justify-center col-span-2 p-8">
+                  <Typography className="text-gray-500 font-montserrat_medium">
+                    Chargement des matières disponibles...
+                  </Typography>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <Typography variant="h6" className="font-montserrat_semi_bold mb-2">
+          <div className="p-4 mb-6 rounded-lg bg-gray-50">
+            <Typography variant="h6" className="mb-2 font-montserrat_semi_bold">
               Détails du paiement
             </Typography>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <Typography className="font-montserrat_medium">
                   Matières sélectionnées:{" "}
@@ -293,7 +326,7 @@ const OfferStudent = () => {
                   Prix par matière:{" "}
                   <span className="font-bold">40 DT</span>
                 </Typography>
-                <Typography className="font-montserrat_semi_bold text-lg mt-2">
+                <Typography className="mt-2 text-lg font-montserrat_semi_bold">
                   Total:{" "}
                   <span className="text-primary">
                     {selectedSubjects.length * 40} DT
@@ -302,11 +335,11 @@ const OfferStudent = () => {
               </div>
               
               <div>
-                <label className="block font-montserrat_medium mb-2">
+                <label className="block mb-2 font-montserrat_medium">
                   Téléverser le reçu de paiement
                 </label>
                 <div 
-                  className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 flex flex-col items-center justify-center"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                   onClick={() => document.getElementById('payment-file-input')?.click()}
                 >
                   <div className="flex flex-col items-center justify-center">
@@ -352,8 +385,8 @@ const OfferStudent = () => {
           <div className="flex justify-end space-x-3">
             <Button
               variant="outlined"
-              onClick={() => setIsSubjectModalOpen(false)}
-              className="font-montserrat_medium border-gray-300 text-gray-700 py-2 px-6 rounded-lg"
+              onClick={handleCloseSubjectModal}
+              className="px-6 py-2 text-gray-700 border-gray-300 rounded-lg font-montserrat_medium"
             >
               Annuler
             </Button>
