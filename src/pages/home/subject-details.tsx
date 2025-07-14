@@ -5,6 +5,7 @@ import { getSubjectServiceById } from "../../services/subject-service";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
+import YouTubeIcon from "@mui/icons-material/YouTube";
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // Nouvelle importation
 import { SnackbarContext } from "../../config/hooks/use-toast";
 import {
@@ -165,6 +166,24 @@ const SubjectDetails = () => {
     if (videoRef.current) {
       videoRef.current.load();
     }
+  };
+
+  // Function to check if URL is a YouTube URL
+  const isYouTubeUrl = (url: string) => {
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)/;
+    return youtubeRegex.test(url);
+  };
+
+  // Function to extract YouTube video ID
+  const getYouTubeVideoId = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+    return match ? match[1] : null;
+  };
+
+  // Function to get YouTube embed URL
+  const getYouTubeEmbedUrl = (url: string) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
   };
 
   useEffect(() => {
@@ -394,38 +413,49 @@ const SubjectDetails = () => {
   };
 
   return (
-    <div className="pt-20 md:pt-40 px-4 md:px-12 flex flex-col items-center pb-20">
+    <div className="flex flex-col items-center px-4 pt-20 pb-20 md:pt-40 md:px-12">
       <div className="w-full md:w-11/12 flex flex-col md:flex-row justify-between bg-purple_bg px-4 md:px-10 py-5 h-[78vh] rounded-3xl mb-5">
-        <div className="w-full md:w-9/12 h-full p-5">
+        <div className="w-full h-full p-5 md:w-9/12">
           <div className="relative w-full h-full overflow-hidden bg-black">
-            <video
-              key={videoUrl}
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              controls
-              controlsList="nodownload"
-              onContextMenu={preventContextMenu}
-              playsInline
-              preload="auto"
-            >
-              <source src={videoUrl} />
-              Your browser does not support the video tag.
-            </video>
+            {videoUrl && isYouTubeUrl(videoUrl) ? (
+              <iframe
+                src={getYouTubeEmbedUrl(videoUrl) || ''}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="YouTube Video"
+              />
+            ) : (
+              <video
+                key={videoUrl}
+                ref={videoRef}
+                className="object-cover w-full h-full"
+                controls
+                controlsList="nodownload"
+                onContextMenu={preventContextMenu}
+                playsInline
+                preload="auto"
+              >
+                <source src={videoUrl} />
+                Your browser does not support the video tag.
+              </video>
+            )}
           </div>
-          <p className="text-title text-xl md:text-2xl font-montserrat_semi_bold mt-3">
+          <p className="mt-3 text-xl text-title md:text-2xl font-montserrat_semi_bold">
             {activePlaylist?.title || "Video title"}
           </p>
           
         </div>
 
-        <div className="w-full md:w-1/4 p-4">
-          <div className="flex justify-between items-center mb-2">
+        <div className="w-full p-4 md:w-1/4">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl md:text-2xl text-title font-montserrat_semi_bold">
               Les Chapitres
             </h2>
             <button
               onClick={handleCreateOpen}
-              className="bg-purple text-white rounded-full p-2 hover:bg-purple-700 transition-colors"
+              className="p-2 text-white transition-colors rounded-full bg-purple hover:bg-purple-700"
               aria-label="Ajouter un chapitre"
             >
               <AddIcon />
@@ -439,9 +469,9 @@ const SubjectDetails = () => {
                   playlist.id === activePlaylist?.id ? "bg-purple text-primary" : ""
                 }`}
               >
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <div 
-                    className="text-lg font-montserrat_semi_bold flex-grow"
+                    className="flex-grow text-lg font-montserrat_semi_bold"
                     onClick={() => handlePlaylistClick(playlist)}
                   >
                     {playlist.title}
@@ -462,7 +492,7 @@ const SubjectDetails = () => {
                     >
                       <FontAwesomeIcon 
                         icon={faEdit} 
-                        className="text-red-500 group-hover:text-red-300 transition-colors duration-200"
+                        className="text-red-500 transition-colors duration-200 group-hover:text-red-300"
                       />
                       <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
                                       group-hover:opacity-100 transition-opacity duration-200
@@ -485,11 +515,9 @@ const SubjectDetails = () => {
                     >
                       <FontAwesomeIcon 
                         icon={faTrash} 
-                        className="text-white group-hover:text-red-100 transition-colors duration-200"
+                        className="text-white transition-colors duration-200 group-hover:text-red-100"
                       />
-                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
-                                      group-hover:opacity-100 transition-opacity duration-200
-                                      text-xs text-red font-medium whitespace-nowrap">
+                      <span className="absolute text-xs font-medium transition-opacity duration-200 -translate-x-1/2 opacity-0 -bottom-6 left-1/2 group-hover:opacity-100 text-red whitespace-nowrap">
                         Supprimer
                       </span>
                     </button>
@@ -501,8 +529,8 @@ const SubjectDetails = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-11/12 flex items-center flex-col bg-purple_bg p-4 md:p-10 rounded-xl">
-        <div className="flex mb-4 w-full items-center justify-between flex-wrap">
+      <div className="flex flex-col items-center w-full p-4 md:w-11/12 bg-purple_bg md:p-10 rounded-xl">
+        <div className="flex flex-wrap items-center justify-between w-full mb-4">
           <div className="flex">
             {statuses.map((status) => (
               <div
@@ -521,7 +549,7 @@ const SubjectDetails = () => {
           {activePlaylist && (
             <a
               href={`http://localhost:3000/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
-              className="flex items-center gap-2 bg-purple text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-lg bg-purple hover:bg-purple-700"
             >
               <InsertDriveFileIcon sx={{ fontSize: 20 }} />
               <span>Ajouter un fichier</span>
@@ -531,21 +559,21 @@ const SubjectDetails = () => {
 
         <div className="w-full pt-10">
           {filteredResources.length > 0 ? (
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <ul className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
               {filteredResources
                 .filter((item) => item.isCompleted === true)
                 .sort((a, b) => a.id - b.id)
                 .map((item) =>
                   activeStatus !== "videos" ? (
-                    <li key={item.id} className="mb-2 list-none flex justify-between items-center">
+                    <li key={item.id} className="flex items-center justify-between mb-2 list-none">
                       <a
                         href={item.url}
-                        className="text-title hover:underline flex items-center"
+                        className="flex items-center text-title hover:underline"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <img alt="pdf" src={Pdf} className="mr-2 w-8 h-8" />
-                        <p className="text-title text-lg font-montserrat_semi_bold">
+                        <img alt="pdf" src={Pdf} className="w-8 h-8 mr-2" />
+                        <p className="text-lg text-title font-montserrat_semi_bold">
                           {item.title}
                         </p>
                       </a>
@@ -562,14 +590,18 @@ const SubjectDetails = () => {
                   ) : (
                     <li
                       key={item.id}
-                      className="list-none flex justify-between items-center"
+                      className="flex items-center justify-between list-none"
                     >
                       <div 
                         className="flex items-center cursor-pointer"
                         onClick={() => handleVideoClick(item.url)}
                       >
-                        <OndemandVideoIcon className="text-purple text-3xl" fontSize="large" />
-                        <p className="ms-4 text-title text-lg font-montserrat_semi_bold">
+                        {isYouTubeUrl(item.url) ? (
+                          <YouTubeIcon className="text-3xl text-red-600" fontSize="large" />
+                        ) : (
+                          <OndemandVideoIcon className="text-3xl text-purple" fontSize="large" />
+                        )}
+                        <p className="text-lg ms-4 text-title font-montserrat_semi_bold">
                           {item.title}
                         </p>
                       </div>
@@ -587,7 +619,7 @@ const SubjectDetails = () => {
                 )}
             </ul>
           ) : (
-            <p className="text-gray-500 text-center py-10">Aucune ressource disponible pour cette section.</p>
+            <p className="py-10 text-center text-gray-500">Aucune ressource disponible pour cette section.</p>
           )}
         </div>
       </div>
@@ -595,8 +627,8 @@ const SubjectDetails = () => {
       {/* Dialog pour supprimer un chapitre */}
       <Dialog open={openDeleteDialog} onClose={handleDeleteClose} fullWidth maxWidth="sm">
         <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl ">
+          <DialogTitle className="flex items-center justify-between">
+            <p className="text-2xl text-title font-montserrat_bold ">
               Supprimer Chapitre
             </p>
             <IconButton onClick={handleDeleteClose}>
@@ -607,14 +639,14 @@ const SubjectDetails = () => {
             <p>Êtes-vous sûr de vouloir supprimer ce chapitre et tous ses contenus ?</p>
             <div className="flex justify-end mt-6 space-x-4">
               <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                 variant="outlined"
                 onClick={handleDeleteClose}
               >
                 Annuler
               </Button>
               <Button
-                className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
+                className="text-white w-44 rounded-2xl bg-red hover:bg-red-700"
                 variant="contained"
                 onClick={handleDeletePlaylist}
               >
@@ -628,8 +660,8 @@ const SubjectDetails = () => {
       {/* Dialog pour créer un nouveau chapitre */}
       <Dialog open={openCreateDialog} onClose={handleCreateClose} fullWidth maxWidth="sm">
         <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl">
+          <DialogTitle className="flex items-center justify-between">
+            <p className="text-2xl text-title font-montserrat_bold">
               Créer un nouveau chapitre
             </p>
             <IconButton onClick={handleCreateClose}>
@@ -639,7 +671,7 @@ const SubjectDetails = () => {
           <DialogContent className="space-y-6">
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
+                <label className="block mb-2 font-medium text-title">Titre du chapitre *</label>
                 <input
                   type="text"
                   placeholder="Ex: Introduction à la programmation"
@@ -649,7 +681,7 @@ const SubjectDetails = () => {
                 />
               </div>
               <div>
-                <label className="block text-title font-medium mb-2">Description</label>
+                <label className="block mb-2 font-medium text-title">Description</label>
                 <textarea
                   placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
                   value={newPlaylist.description}
@@ -661,14 +693,14 @@ const SubjectDetails = () => {
             </div>
             <div className="flex justify-end mt-6 space-x-4">
               <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                 variant="outlined"
                 onClick={handleCreateClose}
               >
                 Annuler
               </Button>
               <Button
-                className="w-44 rounded-2xl bg-purple text-white hover:bg-purple-700"
+                className="text-white w-44 rounded-2xl bg-purple hover:bg-purple-700"
                 variant="contained"
                 onClick={handleCreatePlaylist}
               >
@@ -682,8 +714,8 @@ const SubjectDetails = () => {
       {/* Dialog pour modifier un chapitre */}
       <Dialog open={openEditDialog} onClose={handleEditClose} fullWidth maxWidth="sm">
         <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl">
+          <DialogTitle className="flex items-center justify-between">
+            <p className="text-2xl text-title font-montserrat_bold">
               Modifier le chapitre
             </p>
             <IconButton onClick={handleEditClose}>
@@ -693,7 +725,7 @@ const SubjectDetails = () => {
           <DialogContent className="space-y-6">
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
+                <label className="block mb-2 font-medium text-title">Titre du chapitre *</label>
                 <input
                   type="text"
                   placeholder="Ex: Introduction à la programmation"
@@ -703,7 +735,7 @@ const SubjectDetails = () => {
                 />
               </div>
               <div>
-                <label className="block text-title font-medium mb-2">Description</label>
+                <label className="block mb-2 font-medium text-title">Description</label>
                 <textarea
                   placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
                   value={editPlaylist.description}
@@ -715,14 +747,14 @@ const SubjectDetails = () => {
             </div>
             <div className="flex justify-end mt-6 space-x-4">
               <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                 variant="outlined"
                 onClick={handleEditClose}
               >
                 Annuler
               </Button>
               <Button
-                className="w-44 rounded-2xl bg-blue-500 text-white hover:bg-blue-600"
+                className="text-white bg-blue-500 w-44 rounded-2xl hover:bg-blue-600"
                 variant="contained"
                 onClick={handleUpdatePlaylist}
               >
@@ -736,8 +768,8 @@ const SubjectDetails = () => {
       {/* Dialog pour supprimer un fichier */}
       <Dialog open={openDeleteFileDialog} onClose={handleDeleteFileClose} fullWidth maxWidth="sm">
         <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl">
+          <DialogTitle className="flex items-center justify-between">
+            <p className="text-2xl text-title font-montserrat_bold">
               Supprimer Fichier
             </p>
             <IconButton onClick={handleDeleteFileClose}>
@@ -748,14 +780,14 @@ const SubjectDetails = () => {
             <p>Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible.</p>
             <div className="flex justify-end mt-6 space-x-4">
               <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                 variant="outlined"
                 onClick={handleDeleteFileClose}
               >
                 Annuler
               </Button>
               <Button
-                className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
+                className="text-white w-44 rounded-2xl bg-red hover:bg-red-700"
                 variant="contained"
                 onClick={handleDeleteFile}
               >
