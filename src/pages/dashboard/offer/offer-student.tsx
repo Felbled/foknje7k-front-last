@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { RootState } from "../../../redux/store/store";
 import {
   Button,
@@ -30,6 +30,7 @@ import {
   sendOfferService,
 } from "../../../services/student-offer";
 import { getAllUserByRole } from "../../../services/super-teacher";
+import { initiatePaymentService, verifyPaymentService } from "../../../services/payment-service";
 import MailOutlineOutlinedIcon from "@mui/icons-material/MailOutlineOutlined";
 import { SnackbarContext } from "../../../config/hooks/use-toast";
 import CloseIcon from "@mui/icons-material/Close";
@@ -55,8 +56,75 @@ const OfferStudent = () => {
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'upload'>('online');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
   const snackbarContext = useContext(SnackbarContext);
+  const userId = useSelector((state: RootState) => state?.user?.userData?.id);
+
+  // Function to handle payment verification when user returns from payment gateway
+  const handlePaymentReturn = useCallback(async () => {
+    const pendingPaymentStr = sessionStorage.getItem('pendingPayment');
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentToken = urlParams.get('payment_token');
+
+    if (pendingPaymentStr && paymentToken) {
+      try {
+        const pendingPayment = JSON.parse(pendingPaymentStr);
+        
+        // Verify payment status
+        const verificationResponse = await verifyPaymentService(paymentToken);
+        
+        if (verificationResponse && verificationResponse.status === 'success') {
+          // Payment successful - send offer service with minimal data for online payment
+          const onlinePaymentData = {
+            totalPrice: pendingPayment.totalPrice.toString(),
+            paymentMethod: "online",
+            paymentStatus: "completed",
+            transactionId: verificationResponse.transaction_id || paymentToken
+          };
+          
+          await sendOfferService(pendingPayment.offerId, onlinePaymentData, pendingPayment.subjectIds);
+          
+          // Clear pending payment
+          sessionStorage.removeItem('pendingPayment');
+          
+          // Show success message
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Succès",
+              `Paiement de ${pendingPayment.totalPrice} DT effectué avec succès!`,
+              "success",
+            );
+          }
+          
+          // Refresh data
+          fetchData();
+          
+        } else {
+          // Payment failed
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Erreur",
+              "Le paiement a échoué ou a été annulé",
+              "error"
+            );
+          }
+        }
+      } catch (error: any) {
+        console.error("Payment verification failed:", error);
+        if (snackbarContext) {
+          snackbarContext.showMessage(
+            "Erreur",
+            "Erreur lors de la vérification du paiement",
+            "error"
+          );
+        }
+      } finally {
+        // Clean up URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [snackbarContext]);
 
   const fetchData = () => {
     getAllStudentOfferService()
@@ -93,6 +161,11 @@ const OfferStudent = () => {
         });
     }
   }, [role]);
+
+  // Check for payment return on component mount
+  useEffect(() => {
+    handlePaymentReturn();
+  }, [handlePaymentReturn]);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -194,28 +267,24 @@ const OfferStudent = () => {
       return;
     }
 
-    const formData = new FormData();
-    
-    // Calculer le prix total
+    // Calculate total price and prepare subject IDs
     const totalPrice = selectedSubjects.length * 40;
-    formData.append("totalPrice", totalPrice.toString());
-    
-    // Add payment method
-    formData.append("paymentMethod", paymentMethod);
-    
-    // Ajouter le fichier de paiement si la méthode est upload
-    if (paymentMethod === 'upload' && paymentFile) {
-      formData.append("paymentImage", paymentFile);
-    }
-
-    // Send subject IDs as query parameter
     const subjectIdsParam = selectedSubjects.join(',');
 
     if (paymentMethod === 'online') {
       // Handle online payment
       handleOnlinePayment(subjectIdsParam, totalPrice);
     } else {
-      // Handle upload payment
+      // Handle upload payment - use FormData only for file uploads
+      const formData = new FormData();
+      formData.append("totalPrice", totalPrice.toString());
+      formData.append("paymentMethod", paymentMethod);
+      
+      // Add the payment file only for upload method
+      if (paymentFile) {
+        formData.append("paymentImage", paymentFile);
+      }
+
       sendOfferService(selectedOffer.id, formData, subjectIdsParam)
         .then((res) => {
           setIsSubjectModalOpen(false);
@@ -247,87 +316,74 @@ const OfferStudent = () => {
     }
   };
 
-  const handleOnlinePayment = (subjectIdsParam: string, totalPrice: number) => {
-    // Show loading state
-    if (snackbarContext) {
-      snackbarContext.showMessage(
-        "Info",
-        "Redirection vers la plateforme de paiement...",
-        "info",
+  const handleOnlinePayment = async (subjectIdsParam: string, totalPrice: number) => {
+    if (!userId || !selectedOffer) {
+      snackbarContext?.showMessage(
+        "Erreur",
+        "Informations utilisateur manquantes",
+        "error"
       );
+      return;
     }
-    
-    // TODO: Integrate with real payment gateway
-    // For production, replace this simulation with actual payment gateway integration:
-    // 
-    // For Tunisia, consider:
-    // - MoneyGram Tunisia: https://www.moneygram.com/
-    // - Tunisian Post Payment Gateway
-    // - International options: Stripe, PayPal
-    // 
-    // Example integration steps:
-    // 1. Create payment intent/session with gateway
-    // 2. Redirect user to gateway's payment page
-    // 3. Handle payment success/failure callbacks
-    // 4. Verify payment status with backend
-    // 5. Update order status accordingly
-    
-    setTimeout(() => {
-      // Simulate payment processing
-      const paymentSuccess = window.confirm(
-        `Procéder au paiement en ligne de ${totalPrice} DT?\n\n` +
-        `Matières sélectionnées: ${selectedSubjects.length}\n` +
-        `Total: ${totalPrice} DT\n\n` +
-        `Cliquez sur OK pour simuler un paiement réussi.`
-      );
+
+    try {
+      setIsProcessingPayment(true);
       
-      if (paymentSuccess) {
-        // Simulate successful payment
-        const formData = new FormData();
-        formData.append("totalPrice", totalPrice.toString());
-        formData.append("paymentMethod", "online");
-        formData.append("paymentStatus", "completed");
-        formData.append("transactionId", `TXN_${Date.now()}`); // Simulate transaction ID
-        
-        sendOfferService(selectedOffer.id, formData, subjectIdsParam)
-          .then((res) => {
-            setIsSubjectModalOpen(false);
-            // Reset states
-            setSelectedSubjects([]);
-            setAvailableSubjects([]);
-            setPaymentFile(null);
-            setSelectedOffer(null);
-            setPaymentMethod('online');
-            
-            if (snackbarContext) {
-              snackbarContext.showMessage(
-                "Succes",
-                `Paiement en ligne de ${totalPrice} DT effectué avec succès!`,
-                "success",
-              );
-            }
-          })
-          .catch((e) => {
-            console.log(e);
-            if (snackbarContext) {
-              snackbarContext.showMessage(
-                "Erreur",
-                "Une erreur est survenue lors du paiement en ligne",
-                "error"
-              );
-            }
-          });
-      } else {
-        // Payment cancelled
+      // Show loading state
+      if (snackbarContext) {
+        snackbarContext.showMessage(
+          "Info",
+          "Initialisation du paiement...",
+          "info",
+        );
+      }
+
+      // Initiate payment with the payment service
+      const paymentResponse = await initiatePaymentService({
+        student_id: parseInt(userId?.toString() || "0"),
+        student_offer_id: selectedOffer.id,
+      });
+
+      console.log("Payment response:", paymentResponse);
+
+      if (paymentResponse && paymentResponse.payment_url) {
+        // Redirect user to payment gateway
         if (snackbarContext) {
           snackbarContext.showMessage(
             "Info",
-            "Paiement annulé par l'utilisateur",
-            "warning",
+            "Redirection vers la plateforme de paiement...",
+            "info",
           );
         }
+
+        // Store payment context for when user returns
+        sessionStorage.setItem('pendingPayment', JSON.stringify({
+          offerId: selectedOffer.id,
+          subjectIds: subjectIdsParam,
+          totalPrice: totalPrice,
+          paymentToken: paymentResponse.payment_token,
+        }));
+
+        // Redirect to payment gateway
+        window.location.href = paymentResponse.payment_url;
+        
+      } else {
+        throw new Error("Réponse de paiement invalide");
       }
-    }, 1000); // Simulate redirect delay
+
+    } catch (error: any) {
+      console.error("Payment initiation failed:", error);
+      
+      if (snackbarContext) {
+        snackbarContext.showMessage(
+          "Erreur",
+          error.message || "Erreur lors de l'initialisation du paiement",
+          "error"
+        );
+      }
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const handleCloseSubjectModal = () => {
@@ -500,7 +556,7 @@ const OfferStudent = () => {
                   <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
                     <div className="flex items-center mb-2">
                       <CreditCardIcon className="mr-2 text-blue-600" />
-                      <Typography className="font-montserrat_medium text-blue-800">
+                      <Typography className="text-blue-800 font-montserrat_medium">
                         Paiement en ligne sécurisé
                       </Typography>
                     </div>
@@ -557,12 +613,12 @@ const OfferStudent = () => {
             <Button
               variant="contained"
               onClick={handleSubjectConfirm}
-              disabled={selectedSubjects.length === 0 || (paymentMethod === 'upload' && !paymentFile)}
+              disabled={selectedSubjects.length === 0 || (paymentMethod === 'upload' && !paymentFile) || isProcessingPayment}
               className={`font-montserrat_semi_bold bg-primary text-white py-2 px-6 rounded-lg ${
-                (selectedSubjects.length === 0 || (paymentMethod === 'upload' && !paymentFile)) ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-dark"
+                (selectedSubjects.length === 0 || (paymentMethod === 'upload' && !paymentFile) || isProcessingPayment) ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-dark"
               }`}
             >
-              {paymentMethod === 'online' ? 'Payer en ligne' : 'Confirmer et Envoyer'}
+              {isProcessingPayment ? 'Traitement...' : (paymentMethod === 'online' ? 'Payer en ligne' : 'Confirmer et Envoyer')}
             </Button>
           </div>
         </DialogContent>
