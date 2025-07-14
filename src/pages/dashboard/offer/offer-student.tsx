@@ -9,6 +9,8 @@ import {
   Grid,
   Typography,
   IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CustomButton from "../../../shared/custom-button/custom-button";
@@ -32,6 +34,8 @@ import MailOutlineOutlinedIcon from "@mui/icons-material/MailOutlineOutlined";
 import { SnackbarContext } from "../../../config/hooks/use-toast";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
 const OfferStudent = () => {
   const role = useSelector(
@@ -50,6 +54,7 @@ const OfferStudent = () => {
   const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'upload'>('online');
   
   const snackbarContext = useContext(SnackbarContext);
 
@@ -137,7 +142,8 @@ const OfferStudent = () => {
         } else {
           setIsSubjectModalOpen(true);
           setSelectedSubjects([]); 
-          setPaymentFile(null); 
+          setPaymentFile(null);
+          setPaymentMethod('online'); // Reset to default payment method
         }
       })
       .catch((e) => {
@@ -148,7 +154,8 @@ const OfferStudent = () => {
         } else {
           setIsSubjectModalOpen(true);
           setSelectedSubjects([]); 
-          setPaymentFile(null); 
+          setPaymentFile(null);
+          setPaymentMethod('online'); // Reset to default payment method
         }
       });
   };
@@ -177,47 +184,150 @@ const OfferStudent = () => {
       return;
     }
 
+    // Check if upload method is selected but no file is provided
+    if (paymentMethod === 'upload' && !paymentFile) {
+      snackbarContext?.showMessage(
+        "Erreur",
+        "Veuillez téléverser un reçu de paiement",
+        "error"
+      );
+      return;
+    }
+
     const formData = new FormData();
     
     // Calculer le prix total
     const totalPrice = selectedSubjects.length * 40;
     formData.append("totalPrice", totalPrice.toString());
     
-    // Ajouter le fichier de paiement 
-    if (paymentFile) {
+    // Add payment method
+    formData.append("paymentMethod", paymentMethod);
+    
+    // Ajouter le fichier de paiement si la méthode est upload
+    if (paymentMethod === 'upload' && paymentFile) {
       formData.append("paymentImage", paymentFile);
     }
 
     // Send subject IDs as query parameter
     const subjectIdsParam = selectedSubjects.join(',');
 
-    sendOfferService(selectedOffer.id, formData, subjectIdsParam)
-      .then((res) => {
-        setIsSubjectModalOpen(false);
-        // Reset states
-        setSelectedSubjects([]);
-        setAvailableSubjects([]);
-        setPaymentFile(null);
-        setSelectedOffer(null);
+    if (paymentMethod === 'online') {
+      // Handle online payment
+      handleOnlinePayment(subjectIdsParam, totalPrice);
+    } else {
+      // Handle upload payment
+      sendOfferService(selectedOffer.id, formData, subjectIdsParam)
+        .then((res) => {
+          setIsSubjectModalOpen(false);
+          // Reset states
+          setSelectedSubjects([]);
+          setAvailableSubjects([]);
+          setPaymentFile(null);
+          setSelectedOffer(null);
+          setPaymentMethod('online');
+          
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Succes",
+              "Votre paiement a été envoyé avec succès",
+              "success",
+            );
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Erreur",
+              "Une erreur est survenue lors de l'envoi du paiement",
+              "error"
+            );
+          }
+        });
+    }
+  };
+
+  const handleOnlinePayment = (subjectIdsParam: string, totalPrice: number) => {
+    // Show loading state
+    if (snackbarContext) {
+      snackbarContext.showMessage(
+        "Info",
+        "Redirection vers la plateforme de paiement...",
+        "info",
+      );
+    }
+    
+    // TODO: Integrate with real payment gateway
+    // For production, replace this simulation with actual payment gateway integration:
+    // 
+    // For Tunisia, consider:
+    // - MoneyGram Tunisia: https://www.moneygram.com/
+    // - Tunisian Post Payment Gateway
+    // - International options: Stripe, PayPal
+    // 
+    // Example integration steps:
+    // 1. Create payment intent/session with gateway
+    // 2. Redirect user to gateway's payment page
+    // 3. Handle payment success/failure callbacks
+    // 4. Verify payment status with backend
+    // 5. Update order status accordingly
+    
+    setTimeout(() => {
+      // Simulate payment processing
+      const paymentSuccess = window.confirm(
+        `Procéder au paiement en ligne de ${totalPrice} DT?\n\n` +
+        `Matières sélectionnées: ${selectedSubjects.length}\n` +
+        `Total: ${totalPrice} DT\n\n` +
+        `Cliquez sur OK pour simuler un paiement réussi.`
+      );
+      
+      if (paymentSuccess) {
+        // Simulate successful payment
+        const formData = new FormData();
+        formData.append("totalPrice", totalPrice.toString());
+        formData.append("paymentMethod", "online");
+        formData.append("paymentStatus", "completed");
+        formData.append("transactionId", `TXN_${Date.now()}`); // Simulate transaction ID
         
+        sendOfferService(selectedOffer.id, formData, subjectIdsParam)
+          .then((res) => {
+            setIsSubjectModalOpen(false);
+            // Reset states
+            setSelectedSubjects([]);
+            setAvailableSubjects([]);
+            setPaymentFile(null);
+            setSelectedOffer(null);
+            setPaymentMethod('online');
+            
+            if (snackbarContext) {
+              snackbarContext.showMessage(
+                "Succes",
+                `Paiement en ligne de ${totalPrice} DT effectué avec succès!`,
+                "success",
+              );
+            }
+          })
+          .catch((e) => {
+            console.log(e);
+            if (snackbarContext) {
+              snackbarContext.showMessage(
+                "Erreur",
+                "Une erreur est survenue lors du paiement en ligne",
+                "error"
+              );
+            }
+          });
+      } else {
+        // Payment cancelled
         if (snackbarContext) {
           snackbarContext.showMessage(
-            "Succes",
-            "Votre paiement a été envoyé avec succès",
-            "success",
+            "Info",
+            "Paiement annulé par l'utilisateur",
+            "warning",
           );
         }
-      })
-      .catch((e) => {
-        console.log(e);
-        if (snackbarContext) {
-          snackbarContext.showMessage(
-            "Erreur",
-            "Une erreur est survenue lors de l'envoi du paiement",
-            "error"
-          );
-        }
-      });
+      }
+    }, 1000); // Simulate redirect delay
   };
 
   const handleCloseSubjectModal = () => {
@@ -227,6 +337,7 @@ const OfferStudent = () => {
     setAvailableSubjects([]);
     setPaymentFile(null);
     setSelectedOffer(null);
+    setPaymentMethod('online');
   };
 
   const groupedSrcList: any[] = data.reduce(
@@ -310,9 +421,59 @@ const OfferStudent = () => {
           </div>
 
           <div className="p-4 mb-6 rounded-lg bg-gray-50">
-            <Typography variant="h6" className="mb-2 font-montserrat_semi_bold">
+            <Typography variant="h6" className="mb-4 font-montserrat_semi_bold">
               Détails du paiement
             </Typography>
+            
+            {/* Payment Method Selection */}
+            <div className="mb-6">
+              <Typography className="mb-3 font-montserrat_medium">
+                Choisissez votre méthode de paiement:
+              </Typography>
+              <ToggleButtonGroup
+                value={paymentMethod}
+                exclusive
+                onChange={(event, newMethod) => {
+                  if (newMethod !== null) {
+                    setPaymentMethod(newMethod);
+                  }
+                }}
+                className="w-full"
+              >
+                <ToggleButton 
+                  value="online" 
+                  className="flex-1 py-3"
+                  sx={{
+                    '&.Mui-selected': {
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: '#1565c0',
+                      },
+                    },
+                  }}
+                >
+                  <CreditCardIcon className="mr-2" />
+                  Paiement en ligne
+                </ToggleButton>
+                <ToggleButton 
+                  value="upload" 
+                  className="flex-1 py-3"
+                  sx={{
+                    '&.Mui-selected': {
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: '#1565c0',
+                      },
+                    },
+                  }}
+                >
+                  <CloudUploadIcon className="mr-2" />
+                  Téléverser un reçu
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </div>
             
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
@@ -335,48 +496,51 @@ const OfferStudent = () => {
               </div>
               
               <div>
-                <label className="block mb-2 font-montserrat_medium">
-                  Téléverser le reçu de paiement
-                </label>
-                <div 
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                  onClick={() => document.getElementById('payment-file-input')?.click()}
-                >
-                  <div className="flex flex-col items-center justify-center">
-                    <svg
-                      className="w-8 h-8 mb-4 text-gray-500"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 20 16"
-                    >
-                      <path
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-                      />
-                    </svg>
-                    <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Cliquez pour téléverser</span>
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      JPG, PNG ou PDF (MAX. 5MB)
-                    </p>
+                {paymentMethod === 'online' ? (
+                  <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
+                    <div className="flex items-center mb-2">
+                      <CreditCardIcon className="mr-2 text-blue-600" />
+                      <Typography className="font-montserrat_medium text-blue-800">
+                        Paiement en ligne sécurisé
+                      </Typography>
+                    </div>
+                    <Typography className="text-sm text-blue-600">
+                      Vous serez redirigé vers notre plateforme de paiement sécurisée.
+                      Cartes acceptées: Visa, Mastercard, etc.
+                    </Typography>
                   </div>
-                  <input
-                    type="file"
-                    id="payment-file-input"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept="image/*,.pdf"
-                  />
-                </div>
-                {paymentFile && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    Fichier sélectionné: {paymentFile.name}
-                  </p>
+                ) : (
+                  <>
+                    <label className="block mb-2 font-montserrat_medium">
+                      Téléverser le reçu de paiement
+                    </label>
+                    <div 
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                      onClick={() => document.getElementById('payment-file-input')?.click()}
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <CloudUploadIcon className="w-8 h-8 mb-2 text-gray-500" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Cliquez pour téléverser</span>
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          JPG, PNG ou PDF (MAX. 5MB)
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        id="payment-file-input"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/*,.pdf"
+                      />
+                    </div>
+                    {paymentFile && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        Fichier sélectionné: {paymentFile.name}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -393,12 +557,12 @@ const OfferStudent = () => {
             <Button
               variant="contained"
               onClick={handleSubjectConfirm}
-              disabled={selectedSubjects.length === 0}
+              disabled={selectedSubjects.length === 0 || (paymentMethod === 'upload' && !paymentFile)}
               className={`font-montserrat_semi_bold bg-primary text-white py-2 px-6 rounded-lg ${
-                selectedSubjects.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-dark"
+                (selectedSubjects.length === 0 || (paymentMethod === 'upload' && !paymentFile)) ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-dark"
               }`}
             >
-              Confirmer et Payer
+              {paymentMethod === 'online' ? 'Payer en ligne' : 'Confirmer et Envoyer'}
             </Button>
           </div>
         </DialogContent>
