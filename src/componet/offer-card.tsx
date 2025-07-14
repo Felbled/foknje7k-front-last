@@ -39,10 +39,8 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   
-  
   const isFreeOffer = offer.price === 0;
 
-  
   const themeColors = {
     free: {
       border: "#3B82F6",        
@@ -173,7 +171,7 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
 
   return (
     <div 
-      className="flex flex-col justify-between bg-white shadow-xl rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] w-full max-w-sm h-full"
+      className="flex flex-col bg-white shadow-xl rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] w-full max-w-sm h-full"
       style={{ borderTop: `4px solid ${colors.border}` }}
     >
       <div className="w-full h-48 overflow-hidden">
@@ -196,7 +194,7 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
         </div>
       )}
 
-      <div className="p-6">
+      <div className="p-6 flex flex-col h-full">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h2 
@@ -241,16 +239,18 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           )}
         </div>
 
-        <p className="text-gray-600 mb-4 text-sm">
-          {offer.description}
-        </p>
+        <div className="mb-4 h-16 overflow-hidden">
+          <p className="text-gray-600 text-sm">
+            {offer.description}
+          </p>
+        </div>
 
         <div className="mb-6 flex flex-col">
           <div 
             className="py-3 px-4 rounded-xl mb-3 flex items-center justify-between"
             style={{ backgroundColor: colors.priceBg }}
           >
-            <span className="text-lg font-medium text-gray-700">Prix total</span>
+            <span className="text-lg font-semibold text-gray-700">Matière/ {offer.monthlyPeriod} mois</span>
             <div className="flex items-baseline">
               <span 
                 className="text-4xl font-bold"
@@ -274,12 +274,12 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           )}
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 flex-grow">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">
             Ce que vous obtenez
           </h3>
           
-          <div className="space-y-3">
+          <div className="space-y-3 h-48 overflow-y-auto pr-2">
             {benefitsArray.map((benefit: any, index: React.Key) => (
               <div 
                 className="flex items-start"
@@ -295,28 +295,29 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           </div>
         </div>
 
-        {(!offer.subscribed && role !== "ROLE_ADMIN") && (
-          <div
-            className="w-full text-white py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer text-center"
-            style={{
-              background: `linear-gradient(to right, ${colors.buttonStart}, ${colors.buttonEnd})`,
-              backgroundSize: '200% auto',
-              transition: 'background-position 0.5s',
-            }}
-            onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
-              e.currentTarget.style.background = `linear-gradient(to right, ${colors.buttonHoverStart}, ${colors.buttonHoverEnd})`;
-            }}
-            onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
-              e.currentTarget.style.background = `linear-gradient(to right, ${colors.buttonStart}, ${colors.buttonEnd})`;
-            }}
-            onClick={onclick}
-          >
-            {isFreeOffer ? "Rejoindre gratuitement" : "Souscrire maintenant"}
-          </div>
-        )}
+        <div className="mt-auto pt-4">
+          {(!offer.subscribed && role !== "ROLE_ADMIN") && (
+            <div
+              className="w-full text-white py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer text-center"
+              style={{
+                background: `linear-gradient(to right, ${colors.buttonStart}, ${colors.buttonEnd})`,
+                backgroundSize: '200% auto',
+                transition: 'background-position 0.5s',
+              }}
+              onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
+                e.currentTarget.style.background = `linear-gradient(to right, ${colors.buttonHoverStart}, ${colors.buttonHoverEnd})`;
+              }}
+              onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
+                e.currentTarget.style.background = `linear-gradient(to right, ${colors.buttonStart}, ${colors.buttonEnd})`;
+              }}
+              onClick={onclick}
+            >
+              {isFreeOffer ? "Rejoindre gratuitement" : "Souscrire maintenant"}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Modals */}
       {isOfferStudent ? (
         <OfferStudentModal
           open={isModalOpen}
