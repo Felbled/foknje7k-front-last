@@ -8,16 +8,17 @@ import {
   Button,
   Typography,
   Card,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import Carousel from "react-material-ui-carousel";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import AddIcon from "@mui/icons-material/Add";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import OfferCard from "../../../componet/offer-card";
 import FormModal from "../../../componet/offerModal";
-import { fakeProfiles } from "../../../mocks/classes-data";
-import CommentIcon from "@mui/icons-material/Comment";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import CustomButton from "../../../shared/custom-button/custom-button";
@@ -34,6 +35,9 @@ const Offer = () => {
   const role = useSelector(
     (state: RootState) => state?.user?.userData?.role.name,
   );
+  const teacherId = useSelector(
+    (state: RootState) => state?.user?.userData?.id || ""
+  );
   const snackbarContext = useContext(SnackbarContext);
 
   const [data, setData] = useState<any>([]);
@@ -42,6 +46,7 @@ const Offer = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [isConfirmModal, setIsConfirmModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'upload'>('online');
   const fetchData = () => {
     getAllTeacherOfferService()
       .then((res) => {
@@ -86,22 +91,67 @@ const Offer = () => {
     console.log("Form Data:", formData);
   };
 
-  const handleOpenProfileDialog = (profile: any) => {
-    setSelectedProfile(profile);
-  };
-
   const handleCloseProfileDialog = () => {
     setSelectedProfile(null);
   };
 
   const handleOfferClick = (offer: any) => {
     setSelectedOffer(offer);
-    setIsConfirmModal(true);
+    
+    // For free offers, skip payment modal
+    if (offer.price === 0) {
+      setIsConfirmModal(true);
+    } else {
+      // For paid offers, show payment modal
+      setIsConfirmModal(true);
+      setSelectedFile(null);
+      setPaymentMethod('online'); // Reset to default payment method
+    }
   };
 
   const handleBackToMainView = () => {
     setIsConfirmModal(false);
     setSelectedOffer(null);
+    setSelectedFile(null);
+    setPaymentMethod('online');
+  };
+
+  const handleOnlinePayment = async () => {
+    if (snackbarContext) {
+      snackbarContext.showMessage(
+        "Info",
+        "Redirection vers la plateforme de paiement...",
+        "info",
+      );
+    }
+
+    try {
+      // Call backend to initiate payment and get payment URL
+      if (!selectedOffer) throw new Error("Aucune offre sélectionnée");
+      const payload = {
+        teacher_id: teacherId,
+        teacher_offer_id: selectedOffer.id,
+        payment_type: 'paymee',
+      };
+      
+      // @ts-ignore
+      const { initiateTeacherPaymeePaymentService } = await import("../../../services/payment-service");
+      const result = await initiateTeacherPaymeePaymentService(payload);
+      if (result && result.payment_url) {
+        window.location.href = result.payment_url;
+      } else {
+        throw new Error("URL de paiement non reçue");
+      }
+    } catch (e) {
+      console.log(e);
+      if (snackbarContext) {
+        snackbarContext.showMessage(
+          "Erreur",
+          "Erreur lors de l'initialisation du paiement en ligne",
+          "error"
+        );
+      }
+    }
   };
 
   const groupedSrcList: any[] = data.reduce(
@@ -128,25 +178,77 @@ const Offer = () => {
     }
   };
   const handleConfirmPayment = () => {
-    const confirmedData = new FormData();
-    if (selectedFile) {
-      confirmedData.append("paymentImage", selectedFile);
+    // For free offers, send directly without payment
+    if (selectedOffer.price === 0) {
+      const formData = new FormData();
+      sendOfferTeacherService(selectedOffer.id, formData)
+        .then((res) => {
+          console.log(res);
+          handleBackToMainView();
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Succès",
+              "Vous avez rejoint l'offre gratuite avec succès",
+              "success",
+            );
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Erreur",
+              "Erreur lors de la souscription à l'offre gratuite",
+              "error"
+            );
+          }
+        });
+      return;
     }
-    sendOfferTeacherService(selectedOffer.id, confirmedData)
-      .then((res) => {
-        console.log(res);
-        handleBackToMainView();
+
+    // For paid offers, check payment method
+    if (paymentMethod === 'online') {
+      handleOnlinePayment();
+    } else {
+      // Handle upload payment
+      if (!selectedFile) {
         if (snackbarContext) {
           snackbarContext.showMessage(
-            "Succes",
-            "Votre Payment a étè envoyer  avec succée",
-            "success",
+            "Erreur",
+            "Veuillez téléverser un reçu de paiement",
+            "error"
           );
         }
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+        return;
+      }
+
+      const confirmedData = new FormData();
+      confirmedData.append("paymentImage", selectedFile);
+      confirmedData.append("paymentMethod", paymentMethod);
+      
+      sendOfferTeacherService(selectedOffer.id, confirmedData)
+        .then((res) => {
+          console.log(res);
+          handleBackToMainView();
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Succès",
+              "Votre paiement a été envoyé avec succès",
+              "success",
+            );
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+          if (snackbarContext) {
+            snackbarContext.showMessage(
+              "Erreur",
+              "Une erreur est survenue lors de l'envoi du paiement",
+              "error"
+            );
+          }
+        });
+    }
   };
   return (
     <div
@@ -155,53 +257,151 @@ const Offer = () => {
       }`}
     >
       {isConfirmModal ? (
-        <div className="w-full h-[70vh] flex flex-col items-center">
-          <div className="w-9/12 mb-10">
-            <h1 className="text-title text-lg lg:text-3xl font-montserrat_semi_bold">
-              Confirmer offre
-            </h1>
-          </div>
-          <div className="w-3/4 sm:w-1/2 p-5 flex flex-col items-center bg-white rounded-3xl">
-            <h1 className="font-montserrat_semi_bold text-lg lg:text-3xl  text-title mb-5">
-              Confirmer le Payement
-            </h1>
-            <p className="font-montserrat_regular text-sm text-text mb-5">
-              veuillez fournir une image claire du reçu de paiment
-            </p>
-            <Card
-              className="w-full p-6 mb-5 flex flex-col items-center justify-center cursor-pointer border-dashed border-2 border-primary"
-              onClick={handleCardClick}
-            >
-              <input
-                type="file"
-                id="file-input"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <AddIcon className="text-primary text-6xl mb-2" />
-              <Typography className="text-primary font-montserrat_semi_bold">
-                {selectedFile ? selectedFile.name : "Ajouter le reçu"}
-              </Typography>
-            </Card>
-            <div className="w-full flex flex-col sm:flex-row justify-between">
-              <CustomButton
-                className="bg-white border border-primary w-full text-primary rounded-md h-10 mb-4 sm:mb-0 sm:w-1/3"
-                text={"Précedent"}
-                onClick={handleBackToMainView}
-              />
-              <CustomButton
-                className="bg-primary text-white rounded-md h-10 w-full sm:w-1/3"
-                text={"Envoyer"}
-                onClick={handleConfirmPayment}
-              />
+        selectedOffer && selectedOffer.price === 0 ? (
+          // Free offer modal
+          <div className="w-full h-[40vh] flex flex-col items-center justify-center">
+            <div className="w-9/12 mb-10">
+              <h1 className="text-lg text-title lg:text-3xl font-montserrat_semi_bold">
+                Offre gratuite
+              </h1>
+            </div>
+            <div className="flex flex-col items-center w-3/4 p-5 bg-white sm:w-1/2 rounded-3xl">
+              <h1 className="mb-5 text-lg font-montserrat_semi_bold lg:text-3xl text-title">
+                Vous allez rejoindre cette offre gratuitement !
+              </h1>
+              <div className="flex flex-col justify-between w-full sm:flex-row">
+                <CustomButton
+                  className="w-full h-10 mb-4 bg-white border rounded-md border-primary text-primary sm:mb-0 sm:w-1/3"
+                  text={"Précédent"}
+                  onClick={handleBackToMainView}
+                />
+                <CustomButton
+                  className="w-full h-10 text-white rounded-md bg-primary sm:w-1/3"
+                  text={"Confirmer"}
+                  onClick={handleConfirmPayment}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          // Paid offer modal
+          <div className="w-full h-[70vh] flex flex-col items-center">
+            <div className="w-9/12 mb-10">
+              <h1 className="text-lg text-title lg:text-3xl font-montserrat_semi_bold">
+                Confirmer offre
+              </h1>
+            </div>
+            <div className="flex flex-col items-center w-3/4 p-5 bg-white sm:w-1/2 rounded-3xl">
+              <h1 className="mb-5 text-lg font-montserrat_semi_bold lg:text-3xl text-title">
+                Confirmer le Paiement
+              </h1>
+              
+              {/* Payment Method Selection */}
+              <div className="w-full mb-6">
+                <Typography className="mb-3 text-center font-montserrat_medium">
+                  Choisissez votre méthode de paiement:
+                </Typography>
+                <ToggleButtonGroup
+                  value={paymentMethod}
+                  exclusive
+                  onChange={(event, newMethod) => {
+                    if (newMethod !== null) {
+                      setPaymentMethod(newMethod);
+                    }
+                  }}
+                  className="w-full"
+                >
+                  <ToggleButton 
+                    value="online" 
+                    className="flex-1 py-3"
+                    sx={{
+                      '&.Mui-selected': {
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: '#1565c0',
+                        },
+                      },
+                    }}
+                  >
+                    <CreditCardIcon className="mr-2" />
+                    Paiement en ligne
+                  </ToggleButton>
+                  <ToggleButton 
+                    value="upload" 
+                    className="flex-1 py-3"
+                    sx={{
+                      '&.Mui-selected': {
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: '#1565c0',
+                        },
+                      },
+                    }}
+                  >
+                    <CloudUploadIcon className="mr-2" />
+                    Téléverser un reçu
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </div>
+
+              {paymentMethod === 'online' ? (
+                <div className="w-full p-4 mb-5 border-2 border-blue-200 rounded-lg bg-blue-50">
+                  <div className="flex items-center mb-2">
+                    <CreditCardIcon className="mr-2 text-blue-600" />
+                    <Typography className="text-blue-800 font-montserrat_medium">
+                      Paiement en ligne sécurisé
+                    </Typography>
+                  </div>
+                  <Typography className="text-sm text-blue-600">
+                    Vous serez redirigé vers notre plateforme de paiement sécurisée.
+                    Cartes acceptées: Visa, Mastercard, etc.
+                  </Typography>
+                </div>
+              ) : (
+                <>
+                  <p className="mb-5 text-sm font-montserrat_regular text-text">
+                    Veuillez fournir une image claire du reçu de paiement
+                  </p>
+                  <Card
+                    className="flex flex-col items-center justify-center w-full p-6 mb-5 border-2 border-dashed cursor-pointer border-primary"
+                    onClick={handleCardClick}
+                  >
+                    <input
+                      type="file"
+                      id="file-input"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    <AddIcon className="mb-2 text-6xl text-primary" />
+                    <Typography className="text-primary font-montserrat_semi_bold">
+                      {selectedFile ? selectedFile.name : "Ajouter le reçu"}
+                    </Typography>
+                  </Card>
+                </>
+              )}
+              
+              <div className="flex flex-col justify-between w-full sm:flex-row">
+                <CustomButton
+                  className="w-full h-10 mb-4 bg-white border rounded-md border-primary text-primary sm:mb-0 sm:w-1/3"
+                  text={"Précédent"}
+                  onClick={handleBackToMainView}
+                />
+                <CustomButton
+                  className="w-full h-10 text-white rounded-md bg-primary sm:w-1/3"
+                  text={paymentMethod === 'online' ? 'Payer en ligne' : 'Envoyer'}
+                  onClick={handleConfirmPayment}
+                />
+              </div>
+            </div>
+          </div>
+        )
       ) : (
         <>
           {data && data.length > 0 ? (
-            <div className="w-full md:w-8/12 h-full">
+            <div className="w-full h-full md:w-8/12">
               <Carousel
                 navButtonsAlwaysVisible={true}
                 navButtonsProps={{
@@ -245,10 +445,10 @@ const Offer = () => {
           )}
 
           {role === "ROLE_ADMIN" && (
-            <div className="flex item-center justify-center w-full md:w-1/3 mt-5 md:mt-0">
+            <div className="flex justify-center w-full mt-5 item-center md:w-1/3 md:mt-0">
               <div
                 onClick={handleOpenModal}
-                className="cursor-pointer bg-primary p-5 rounded-full"
+                className="p-5 rounded-full cursor-pointer bg-primary"
               >
                 <AddIcon className="text-white" style={{ fontSize: 50 }} />
               </div>
@@ -274,7 +474,7 @@ const Offer = () => {
           style: { maxWidth: "800px" },
         }}
       >
-        <DialogTitle className="text-center font-semibold text-2xl text-primary mb-3">
+        <DialogTitle className="mb-3 text-2xl font-semibold text-center text-primary">
           Profile Details
         </DialogTitle>
         <DialogContent className="flex flex-col items-center">
@@ -283,16 +483,16 @@ const Offer = () => {
               <img
                 alt="img"
                 src={selectedProfile.photo}
-                className="w-32 h-32 rounded-full mb-5 shadow-lg"
+                className="w-32 h-32 mb-5 rounded-full shadow-lg"
               />
               <div className="flex items-center mb-4">
-                <PersonIcon className="text-primary mr-2" />
-                <Typography variant="h6" className="font-medium text-xl">
+                <PersonIcon className="mr-2 text-primary" />
+                <Typography variant="h6" className="text-xl font-medium">
                   {selectedProfile.name}
                 </Typography>
               </div>
               <div className="flex items-center mb-4">
-                <PhoneIcon className="text-primary mr-2" />
+                <PhoneIcon className="mr-2 text-primary" />
                 <Typography variant="body1" className="text-lg">
                   {selectedProfile.phone}
                 </Typography>
@@ -303,7 +503,7 @@ const Offer = () => {
         <DialogActions className="justify-center">
           <Button
             onClick={handleCloseProfileDialog}
-            className="bg-primary text-white px-6 py-2 rounded-full"
+            className="px-6 py-2 text-white rounded-full bg-primary"
           >
             Close
           </Button>

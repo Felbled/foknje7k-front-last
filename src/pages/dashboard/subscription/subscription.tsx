@@ -63,15 +63,15 @@ const Subscription = () => {
             Expirée
           </p>
         ) : row.status === "ACCEPTED" ? (
-          <p className="cursor-pointer bg-primary_bg text-white font-montserrat_regular rounded-full px-5">
+          <p className="px-5 text-white rounded-full cursor-pointer bg-primary_bg font-montserrat_regular">
             Acceptée
           </p>
         ) : row.status === "REJECTED" ? (
-          <p className="cursor-pointer bg-red text-white font-montserrat_regular rounded-full px-5 ms-1">
+          <p className="px-5 text-white rounded-full cursor-pointer bg-red font-montserrat_regular ms-1">
             Rejetée
           </p>
         ) : (
-          <p className="cursor-pointer bg-text text-white font-montserrat_regular rounded-full px-5 ms-1">
+          <p className="px-5 text-white rounded-full cursor-pointer bg-text font-montserrat_regular ms-1">
             Pending
           </p>
         )}
@@ -84,51 +84,57 @@ const Subscription = () => {
 
   return (
     <div className="w-full p-3">
-      <p className="text-3xl text-title font-montserrat_bold mb-10">
+      <p className="mb-10 text-3xl text-title font-montserrat_bold">
         Abonnement
       </p>
-      <div className="flex flex-col md:flex-row items-center justify-around px-5 md:px-10 mb-10">
-        <div className="bg-white flex flex-col items-center p-5 rounded-3xl w-full md:w-2/5 mb-5 md:mb-0">
-          <p className="text-2xl text-title font-montserrat_semi_bold mb-10 mt-3">
+      <div className="flex flex-col items-center justify-around px-5 mb-10 md:flex-row md:px-10">
+        <div className="flex flex-col items-center w-full p-5 mb-5 bg-white rounded-3xl md:w-2/5 md:mb-0">
+          <p className="mt-3 mb-10 text-2xl text-title font-montserrat_semi_bold">
             Votre solde Actuel
           </p>
           <div className="flex items-center justify-between w-10/12">
-            <p className="text-red font-montserrat_semi_bold text-lg">
+            <p className="text-lg text-red font-montserrat_semi_bold">
               0 Points
             </p>
             <img src={Pocket} alt={"image-pocket"} className={"w-32 h-32"} />
           </div>
-          <div className="w-10/12 border-primary border-2 rounded-lg p-2 my-2">
-            <p className="text-text font-montserrat_medium text-sm">
+          <div className="w-10/12 p-2 my-2 border-2 rounded-lg border-primary">
+            <p className="text-sm text-text font-montserrat_medium">
               Banque BNA
             </p>
-            <p className="text-text font-montserrat_medium text-sm">
+            <p className="text-sm text-text font-montserrat_medium">
               Compte : Omar Riahi
             </p>
-            <p className="text-text font-montserrat_medium text-sm">
+            <p className="text-sm text-text font-montserrat_medium">
               RIB : 03 200 012 0112 000 266 51
             </p>
           </div>
-          <div className="w-10/12 border-primary border-2 rounded-lg p-2 my-2">
-            <p className="text-text font-montserrat_medium text-sm">
+          <div className="w-10/12 p-2 my-2 border-2 rounded-lg border-primary">
+            <p className="text-sm text-text font-montserrat_medium">
               La Poste Tunisienne
             </p>
-            <p className="text-text font-montserrat_medium text-sm">
+            <p className="text-sm text-text font-montserrat_medium">
               Compte : Riahi Omar
             </p>
-            <p className="text-text font-montserrat_medium text-sm">
+            <p className="text-sm text-text font-montserrat_medium">
               D17 : 4742 0140 4391 9147
+            </p>            
+            <p className="text-sm text-text font-montserrat_medium">
+              D17 Téléphone : 22 946 781
             </p>
           </div>
-          <div className="w-10/12 border-primary border-2 rounded-lg p-2 my-2">
-            <p className="text-text font-montserrat_medium text-sm">
+          <div className="w-10/12 p-2 my-2 border-2 rounded-lg border-primary">
+            <p className="text-sm text-text font-montserrat_medium">
               La Poste Tunisienne
             </p>
-            <p className="text-text font-montserrat_medium text-sm">
+            <p className="text-sm text-text font-montserrat_medium">
               Compte : Riahi Omar
             </p>
-            <p className="text-text font-montserrat_medium text-sm">
+            <p className="text-sm text-text font-montserrat_medium">
               RIB : 17 002000000 3493 484 56
+            </p>            
+            <p className="text-sm text-text font-montserrat_medium">
+              Numéro Compte : 03 49 34 84 56
             </p>
           </div>
         </div>
@@ -140,10 +146,10 @@ const Subscription = () => {
             backgroundSize: "cover",
           }}
         >
-          <h1 className="text-white font-montserrat_semi_bold text-2xl mb-5">
+          <h1 className="mb-5 text-2xl text-white font-montserrat_semi_bold">
             Notre Mission
           </h1>
-          <p className="text-white font-montserrat_regular text-lg leading-10">
+          <p className="text-lg leading-10 text-white font-montserrat_regular">
             Apprenez en ligne comme si vous y étiez ! Des cours en direct avec
             vidéo et audio haute qualité pour une expérience immersive et
             interactive. Engagement accru, meilleure rétention et accessibilité

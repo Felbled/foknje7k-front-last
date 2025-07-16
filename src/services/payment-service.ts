@@ -7,6 +7,12 @@ export interface PaymeePaymentInit {
   payment_type?: string;
 }
 
+export interface TeacherPaymeePaymentInit {
+  teacher_id: string;
+  teacher_offer_id: number;
+  payment_type?: string;
+}
+
 export const initiatePaymeePaymentService = async (data: PaymeePaymentInit | (PaymeePaymentInit & { paymentImage?: File })) => {
   let requestData: any = data;
   let headers: any = {};
@@ -23,6 +29,30 @@ export const initiatePaymeePaymentService = async (data: PaymeePaymentInit | (Pa
   }
   const response = await NetworkService.getInstance().sendHttpRequest({
     url: 'payments/initiate',
+    method: 'POST',
+    withLoader: true,
+    withFailureLogs: false,
+    data: requestData,
+    headers,
+  } as any);
+  return response.data;
+};
+
+export const initiateTeacherPaymeePaymentService = async (data: TeacherPaymeePaymentInit | (TeacherPaymeePaymentInit & { paymentImage?: File })) => {
+  let requestData: any = data;
+  let headers: any = {};
+  // If paymentImage is present, use FormData
+  if ((data as any).paymentImage) {
+    const formData = new FormData();
+    formData.append('teacher_id', (data as any).teacher_id);
+    formData.append('teacher_offer_id', String((data as any).teacher_offer_id));
+    formData.append('payment_type', (data as any).payment_type || 'upload');
+    formData.append('paymentImage', (data as any).paymentImage);
+    requestData = formData;
+    headers['Content-Type'] = 'multipart/form-data';
+  }
+  const response = await NetworkService.getInstance().sendHttpRequest({
+    url: 'payments/teacher/initiate',
     method: 'POST',
     withLoader: true,
     withFailureLogs: false,
