@@ -29,10 +29,13 @@ import StudentRequests from "./pages/dashboard/request/student-requests";
 import VerificationCode from "./pages/auth/forget-password/verification-code";
 import Stats from "./pages/dashboard/stats/stats";
 import ProfilePage from "./pages/dashboard/updateprofil/updateprofil";
+import PaymentReturn from "./pages/api/payment/return";
+import PaymentCancel from "./pages/api/payment/cancel";
+import PaymentWebhook from "./pages/api/payment/webhook";
 
 function App() {
   return (
-    <div className="bg-blue-200 min-h-screen">
+    <div className="min-h-screen bg-blue-200">
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -72,6 +75,11 @@ function App() {
             path="/verification-code/:email"
             element={<VerificationCode />}
           />
+          
+          {/* Payment Routes */}
+            <Route path="/api/payment/return" element={<PaymentReturn />} />
+            <Route path="/api/payment/cancel" element={<PaymentCancel />} />
+            <Route path="/api/payment/webhook" element={<PaymentWebhook />} />
         </Routes>
         <GlobalLoader />
       </BrowserRouter>

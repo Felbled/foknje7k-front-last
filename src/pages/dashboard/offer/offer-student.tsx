@@ -41,6 +41,9 @@ const OfferStudent = () => {
   const role = useSelector(
     (state: RootState) => state?.user?.userData?.role.name,
   );
+  const studentId = useSelector(
+    (state: RootState) => state?.user?.userData?.id || ""
+  );
 
   const [data, setData] = useState<any>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -213,9 +216,11 @@ const OfferStudent = () => {
 
     if (paymentMethod === 'online') {
       // Handle online payment
+      console.log('[PAYMENT] Using ONLINE payment endpoint.');
       handleOnlinePayment(subjectIdsParam, totalPrice);
     } else {
       // Handle upload payment
+      console.log('[PAYMENT] Using MANUAL payment endpoint.');
       sendOfferService(selectedOffer.id, formData, subjectIdsParam)
         .then((res) => {
           setIsSubjectModalOpen(false);
@@ -247,8 +252,7 @@ const OfferStudent = () => {
     }
   };
 
-  const handleOnlinePayment = (subjectIdsParam: string, totalPrice: number) => {
-    // Show loading state
+  const handleOnlinePayment = async (subjectIdsParam: string, totalPrice: number) => {
     if (snackbarContext) {
       snackbarContext.showMessage(
         "Info",
@@ -256,78 +260,35 @@ const OfferStudent = () => {
         "info",
       );
     }
-    
-    // TODO: Integrate with real payment gateway
-    // For production, replace this simulation with actual payment gateway integration:
-    // 
-    // For Tunisia, consider:
-    // - MoneyGram Tunisia: https://www.moneygram.com/
-    // - Tunisian Post Payment Gateway
-    // - International options: Stripe, PayPal
-    // 
-    // Example integration steps:
-    // 1. Create payment intent/session with gateway
-    // 2. Redirect user to gateway's payment page
-    // 3. Handle payment success/failure callbacks
-    // 4. Verify payment status with backend
-    // 5. Update order status accordingly
-    
-    setTimeout(() => {
-      // Simulate payment processing
-      const paymentSuccess = window.confirm(
-        `Procéder au paiement en ligne de ${totalPrice} DT?\n\n` +
-        `Matières sélectionnées: ${selectedSubjects.length}\n` +
-        `Total: ${totalPrice} DT\n\n` +
-        `Cliquez sur OK pour simuler un paiement réussi.`
-      );
-      
-      if (paymentSuccess) {
-        // Simulate successful payment
-        const formData = new FormData();
-        formData.append("totalPrice", totalPrice.toString());
-        formData.append("paymentMethod", "online");
-        formData.append("paymentStatus", "completed");
-        formData.append("transactionId", `TXN_${Date.now()}`); // Simulate transaction ID
-        
-        sendOfferService(selectedOffer.id, formData, subjectIdsParam)
-          .then((res) => {
-            setIsSubjectModalOpen(false);
-            // Reset states
-            setSelectedSubjects([]);
-            setAvailableSubjects([]);
-            setPaymentFile(null);
-            setSelectedOffer(null);
-            setPaymentMethod('online');
-            
-            if (snackbarContext) {
-              snackbarContext.showMessage(
-                "Succes",
-                `Paiement en ligne de ${totalPrice} DT effectué avec succès!`,
-                "success",
-              );
-            }
-          })
-          .catch((e) => {
-            console.log(e);
-            if (snackbarContext) {
-              snackbarContext.showMessage(
-                "Erreur",
-                "Une erreur est survenue lors du paiement en ligne",
-                "error"
-              );
-            }
-          });
+
+    try {
+      // Call backend to initiate payment and get payment URL
+      if (!selectedOffer) throw new Error("Aucune offre sélectionnée");
+      const payload = {
+        student_id: studentId,
+        student_offer_id: selectedOffer.id,
+        subject_ids: selectedSubjects,
+        payment_type: 'paymee',
+      };
+      console.log('[PAYMENT] Payload for ONLINE payment:', payload);
+      // @ts-ignore
+      const { initiatePaymeePaymentService } = await import("../../../services/payment-service");
+      const result = await initiatePaymeePaymentService(payload);
+      if (result && result.payment_url) {
+        window.location.href = result.payment_url;
       } else {
-        // Payment cancelled
-        if (snackbarContext) {
-          snackbarContext.showMessage(
-            "Info",
-            "Paiement annulé par l'utilisateur",
-            "warning",
-          );
-        }
+        throw new Error("URL de paiement non reçue");
       }
-    }, 1000); // Simulate redirect delay
+    } catch (e) {
+      console.log(e);
+      if (snackbarContext) {
+        snackbarContext.showMessage(
+          "Erreur",
+          "Erreur lors de l'initialisation du paiement en ligne",
+          "error"
+        );
+      }
+    }
   };
 
   const handleCloseSubjectModal = () => {
@@ -500,7 +461,7 @@ const OfferStudent = () => {
                   <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
                     <div className="flex items-center mb-2">
                       <CreditCardIcon className="mr-2 text-blue-600" />
-                      <Typography className="font-montserrat_medium text-blue-800">
+                      <Typography className="text-blue-800 font-montserrat_medium">
                         Paiement en ligne sécurisé
                       </Typography>
                     </div>
@@ -769,4 +730,3 @@ const OfferStudent = () => {
 };
 
 export default OfferStudent;
-

@@ -6,6 +6,7 @@ import CustomButton from "../../../shared/custom-button/custom-button";
 import CustomInput from "../../../shared/custom-input/custom-input";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
+import YouTubeIcon from "@mui/icons-material/YouTube";
 import {
   getAllSubjectsByGroupId,
   getAllUserSubjectService,
@@ -39,6 +40,7 @@ const Files = () => {
     fileName: "",
     playlist: "",
     segment: "",
+    youtubeUrl: "",
   });
   const [groupOptions, setGroupOptions] = useState<
     { label: string; value: number }[]
@@ -99,6 +101,19 @@ const Files = () => {
       setPlaylists(playlistsOptions);
     }
 
+    // Clear file when switching to YouTube and clear YouTube URL when switching away
+    if (name === "segment") {
+      if (value === "youtube") {
+        setFile(null); // Clear file when switching to YouTube
+      } else {
+        // Clear YouTube URL when switching away from YouTube
+        setFormData((prevData) => ({
+          ...prevData,
+          youtubeUrl: "",
+        }));
+      }
+    }
+
     setFormData((prevData) => ({
       ...prevData,
       [name!]: value,
@@ -122,6 +137,97 @@ const Files = () => {
 
 
   const handleClick = async () => {
+    // For YouTube videos, we don't need a file
+    if (formData.segment === 'youtube') {
+      if (!formData.youtubeUrl) {
+        if (snackbarContext) {
+          snackbarContext.showMessage(
+            "Erreur",
+            "Veuillez saisir l'URL YouTube",
+            "error",
+          );
+        }
+        return;
+      }
+
+      // Validate YouTube URL format
+      const youtubeUrlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)/;
+      if (!youtubeUrlPattern.test(formData.youtubeUrl)) {
+        if (snackbarContext) {
+          snackbarContext.showMessage(
+            "Erreur",
+            "Veuillez saisir une URL YouTube valide (ex: https://www.youtube.com/watch?v=...)",
+            "error",
+          );
+        }
+        return;
+      }
+
+      if(formData.subject === "" || formData.playlist === "" || formData.fileName === "") {
+        if (snackbarContext) {
+          snackbarContext.showMessage(
+            "Erreur",
+            "Veuillez remplir tous les champs",
+            "error",
+          );
+        }
+        return;
+      }
+
+      // Handle YouTube URL submission logic
+      const formSent = new FormData();
+      const formSentJson = {
+        category: formData.segment,
+        title: formData.fileName,
+        youtubeUrl: formData.youtubeUrl, // Add YouTube URL to the payload
+      };
+      formSent.append("subjectId", formData.subject);
+      formSent.append("uploadItemRequestJson", JSON.stringify(formSentJson));
+      
+      setLoading(true);
+      try {
+        const response = await uploadItemPlayListService(
+          Number(formData.playlist),
+          formSent,
+          (progressEvent: any) => {
+            // For YouTube URLs, we can simulate progress or skip it
+            setUploadProgress(100);
+          }
+        );
+        
+        setFormData({
+          segment: "",
+          fileName: "",
+          subject: "",
+          playlist: "",
+          youtubeUrl: "",
+        });
+        
+        if (snackbarContext) {
+          snackbarContext.showMessage(
+            "Succès",
+            "URL YouTube ajoutée avec succès",
+            "success",
+          );
+        }
+        setLoading(false);
+        setUploadProgress(0);
+      } catch (error) {
+        console.error("Error uploading YouTube URL:", error);
+        if (snackbarContext) {
+          snackbarContext.showMessage(
+            "Erreur",
+            "Erreur lors de l'ajout de l'URL YouTube",
+            "error",
+          );
+        }
+        setLoading(false);
+        setUploadProgress(0);
+      }
+      return;
+    }
+
+    // Original file upload logic for non-YouTube content
     if (!file) {
       if (snackbarContext) {
         snackbarContext.showMessage(
@@ -228,12 +334,13 @@ const Files = () => {
         setUploadProgress(uploadProgress);
       }
     ).then((res) => {
-      setFormData({
-        segment: "",
-        fileName: "",
-        subject: "",
-        playlist: "",
-      });
+        setFormData({
+          segment: "",
+          fileName: "",
+          subject: "",
+          playlist: "",
+          youtubeUrl: "",
+        });
       if (snackbarContext) {
         snackbarContext.showMessage(
           "Succes",
@@ -334,16 +441,16 @@ const Files = () => {
   };
 
   return (
-    <div className="w-full flex flex-col justify-center mb-10 px-4 md:px-0">
-      <h1 className="text-title font-montserrat_bold text-2xl md:text-3xl mb-6 md:mb-10">
+    <div className="flex flex-col justify-center w-full px-4 mb-10 md:px-0">
+      <h1 className="mb-6 text-2xl text-title font-montserrat_bold md:text-3xl md:mb-10">
         Gestion des Fichiers
       </h1>
-      <div className="w-full flex justify-center">
-        <div className="bg-white rounded-3xl flex flex-col items-center p-6 md:p-10 w-full max-w-full md:w-10/12">
-          <h1 className="text-title text-center font-montserrat_bold text-xl md:text-3xl mb-3">
+      <div className="flex justify-center w-full">
+        <div className="flex flex-col items-center w-full max-w-full p-6 bg-white rounded-3xl md:p-10 md:w-10/12">
+          <h1 className="mb-3 text-xl text-center text-title font-montserrat_bold md:text-3xl">
             Téléchargement des Fichiers
           </h1>
-          <p className="text-text text-sm font-montserrat_regular mb-6 md:mb-10 text-center">
+          <p className="mb-6 text-sm text-center text-text font-montserrat_regular md:mb-10">
             Veuillez fournir le/les fichier(s) pour les télécharger
           </p>
 
@@ -381,18 +488,32 @@ const Files = () => {
             onChange={handleInputChange}
           />
 
-          <CustomInput
-            label={"Télécharger le fichier"}
-            CustomStyle={"w-full"}
-            inputType={"file"}
-            labelClasses={"font-montserrat_bold mb-2"}
-            placeholder={"Télécharger le fichier"}
-            iconPrefix={<NoteAddIcon className={"text-text"} />}
-            onChange={handleFileChange}
-          />
+          {formData.segment === 'youtube' ? (
+            <CustomInput
+              label={"Ajouter Youtube Url"}
+              CustomStyle={"w-full"}
+              inputType={"url"}
+              labelClasses={"font-montserrat_bold mb-2"}
+              placeholder={"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
+              iconPrefix={<YouTubeIcon className={"text-text"} />}
+              value={formData.youtubeUrl}
+              name="youtubeUrl"
+              onChange={handleInputChange}
+            />
+          ) : (
+            <CustomInput
+              label={"Télécharger le fichier"}
+              CustomStyle={"w-full"}
+              inputType={"file"}
+              labelClasses={"font-montserrat_bold mb-2"}
+              placeholder={"Sélectionner un fichier"}
+              iconPrefix={<NoteAddIcon className={"text-text"} />}
+              onChange={handleFileChange}
+            />
+          )}
 
           {/* Section for Playlist and Segment Select */}
-          <div className="w-full flex flex-col md:flex-row justify-between mt-6 md:mt-0">
+          <div className="flex flex-col justify-between w-full mt-6 md:flex-row md:mt-0">
             <CustomSelectDashboard
               options={playlists}
               value={formData.playlist}
@@ -406,6 +527,7 @@ const Files = () => {
 
             <CustomSelectDashboard
               options={[
+                { value: "youtube", label: "Youtube Video" },
                 { value: "video", label: "Vidéo" },
                 { value: "qcm", label: "QCM" },
                 { value: "fiche", label: "Fichier" },
@@ -420,7 +542,7 @@ const Files = () => {
             />
           </div>
 
-          <div className="w-full flex justify-end mt-10 md:mt-20">
+          <div className="flex justify-end w-full mt-10 md:mt-20">
             <CustomButton
               text={"Télécharger"}
               width={"w-full md:w-44"}
