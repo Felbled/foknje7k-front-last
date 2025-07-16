@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store/store";
 import { Pdf } from "../../assets/svg";
 import { getSubjectServiceById } from "../../services/subject-service";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // Nouvelle importation
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { SnackbarContext } from "../../config/hooks/use-toast";
 import {
   Button,
@@ -51,7 +53,7 @@ interface Playlist {
   fiches: Resource[];
   exercices: Resource[];
   corrections: Resource[];
-  [key: string]: any; // Correction: Ajout de la signature d'index
+  [key: string]: any;
 }
 
 interface SubjectData {
@@ -67,13 +69,16 @@ const SubjectDetails = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id");
+  
+  // Récupération du rôle utilisateur
+  const role = useSelector((state: RootState) => state?.user?.userData?.role?.name);
+  const isAdmin = role === "ROLE_ADMIN";
 
   const [subjectData, setSubjectData] = useState<SubjectData | null>(null);
   const [activeStatus, setActiveStatus] = useState<string>("videos");
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
   const [videoUrl, setVideoUrl] = useState("");
   
-  // États pour les dialogues
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -87,14 +92,12 @@ const SubjectDetails = () => {
     playlistId: number;
   } | null>(null);
   
-  // États pour les notifications
   const [localSnackbar, setLocalSnackbar] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error"
   });
   
-  // États pour les formulaires
   const [newPlaylist, setNewPlaylist] = useState({
     title: "",
     description: "",
@@ -118,7 +121,6 @@ const SubjectDetails = () => {
     }
   };
 
-  // Mappage des types de fichiers
   const fileTypeMapping: Record<string, string> = {
     Video: "videos",
     Fiche: "fiches",
@@ -186,7 +188,6 @@ const SubjectDetails = () => {
     }
   };
 
-  // Gestion de la suppression des playlists
   const handleDeleteClick = (playlist: Playlist) => {
     setPlaylistToDelete(playlist);
     setOpenDeleteDialog(true);
@@ -197,14 +198,12 @@ const SubjectDetails = () => {
     setPlaylistToDelete(null);
   };
 
-  // Gestion de la création
   const handleCreateOpen = () => setOpenCreateDialog(true);
   const handleCreateClose = () => {
     setOpenCreateDialog(false);
     setNewPlaylist({ title: "", description: "" });
   };
 
-  // Gestion de la modification
   const handleEditClick = (playlist: Playlist) => {
     setPlaylistToEdit(playlist);
     setEditPlaylist({
@@ -220,7 +219,6 @@ const SubjectDetails = () => {
     setEditPlaylist({ title: "", description: "" });
   };
 
-  // Gestion de la suppression des fichiers
   const handleDeleteFileClick = (fileId: number, fileType: string) => {
     if (!activePlaylist) return;
     
@@ -237,7 +235,6 @@ const SubjectDetails = () => {
     setFileToDelete(null);
   };
 
-  // Actions
   const handleDeletePlaylist = () => {
     if (!playlistToDelete || !subjectData) return;
 
@@ -311,7 +308,6 @@ const SubjectDetails = () => {
         fetchSubjectData();
         showToast("Chapitre modifié avec succès", "success");
         
-        // Mettre à jour le chapitre actif si c'est celui modifié
         if (activePlaylist?.id === playlistToEdit.id) {
           setActivePlaylist({
             ...activePlaylist,
@@ -333,7 +329,6 @@ const SubjectDetails = () => {
 
     deleteItemPlaylistService(fileToDelete.playlistId, fileToDelete.id)
       .then(() => {
-        // Mise à jour locale des données sans rechargement
         const updatedPlaylists = subjectData.playLists.map(playlist => {
           if (playlist.id === fileToDelete.playlistId) {
             const resourceType = fileTypeMapping[fileToDelete.type];
@@ -352,7 +347,6 @@ const SubjectDetails = () => {
           playLists: updatedPlaylists
         });
 
-        // Mettre à jour la playlist active si nécessaire
         if (activePlaylist && activePlaylist.id === fileToDelete.playlistId) {
           const updatedActivePlaylist = updatedPlaylists.find(
             pl => pl.id === activePlaylist.id
@@ -423,13 +417,17 @@ const SubjectDetails = () => {
             <h2 className="text-xl md:text-2xl text-title font-montserrat_semi_bold">
               Les Chapitres
             </h2>
-            <button
-              onClick={handleCreateOpen}
-              className="bg-purple text-white rounded-full p-2 hover:bg-purple-700 transition-colors"
-              aria-label="Ajouter un chapitre"
-            >
-              <AddIcon />
-            </button>
+            
+            {/* Bouton Ajouter chapitre (seulement pour admin) */}
+            {isAdmin && (
+              <button
+                onClick={handleCreateOpen}
+                className="bg-purple text-white rounded-full p-2 hover:bg-purple-700 transition-colors"
+                aria-label="Ajouter un chapitre"
+              >
+                <AddIcon />
+              </button>
+            )}
           </div>
           <ul className="overflow-y-auto h-[65vh] hide-scrollbar">
             {subjectData?.playLists.map((playlist) => (
@@ -446,54 +444,58 @@ const SubjectDetails = () => {
                   >
                     {playlist.title}
                   </div>
-                  <div className="flex space-x-1">
-                    <button
-                      className="relative bg-[#3e38db] text-white px-3 py-1 rounded-full text-sm
+                  
+                  {/* Boutons Modifier/Supprimer (seulement pour admin) */}
+                  {isAdmin && (
+                    <div className="flex space-x-1">
+                      <button
+                        className="relative bg-[#3e38db] text-white px-3 py-1 rounded-full text-sm
                                  transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
                                  hover:scale-[1.03] hover:shadow-lg hover:bg-blue-600
                                  active:scale-95 active:shadow-md
                                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
                                  group"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditClick(playlist);
-                      }}
-                      aria-label="Modifier"
-                    >
-                      <FontAwesomeIcon 
-                        icon={faEdit} 
-                        className="text-red-500 group-hover:text-red-300 transition-colors duration-200"
-                      />
-                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(playlist);
+                        }}
+                        aria-label="Modifier"
+                      >
+                        <FontAwesomeIcon 
+                          icon={faEdit} 
+                          className="text-red-500 group-hover:text-red-300 transition-colors duration-200"
+                        />
+                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
                                       group-hover:opacity-100 transition-opacity duration-200
                                       text-xs text-blue-500 text-[#3e38db] font-medium whitespace-nowrap">
-                        Modifier
-                      </span>
-                    </button>
-                    <button
-                      className="relative bg-red  px-3 py-1 rounded-full text-sm
+                          Modifier
+                        </span>
+                      </button>
+                      <button
+                        className="relative bg-red  px-3 py-1 rounded-full text-sm
                                  transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
                                  hover:scale-[1.03] hover:shadow-lg hover:bg-red-700
                                  active:scale-95 active:shadow-md
                                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2
                                  group"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(playlist);
-                      }}
-                      aria-label="Supprimer"
-                    >
-                      <FontAwesomeIcon 
-                        icon={faTrash} 
-                        className="text-white group-hover:text-red-100 transition-colors duration-200"
-                      />
-                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(playlist);
+                        }}
+                        aria-label="Supprimer"
+                      >
+                        <FontAwesomeIcon 
+                          icon={faTrash} 
+                          className="text-white group-hover:text-red-100 transition-colors duration-200"
+                        />
+                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
                                       group-hover:opacity-100 transition-opacity duration-200
                                       text-xs text-red font-medium whitespace-nowrap">
-                        Supprimer
-                      </span>
-                    </button>
-                  </div>
+                          Supprimer
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </li>
             ))}
@@ -517,8 +519,8 @@ const SubjectDetails = () => {
             ))}
           </div>
           
-          {/* Bouton Ajouter un fichier */}
-          {activePlaylist && (
+          {/* Bouton Ajouter un fichier (seulement pour admin) */}
+          {isAdmin && activePlaylist && (
             <a
               href={`http://localhost:3000/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
               className="flex items-center gap-2 bg-purple text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
@@ -549,15 +551,19 @@ const SubjectDetails = () => {
                           {item.title}
                         </p>
                       </a>
-                      <button
-                        onClick={() => handleDeleteFileClick(
-                          item.id, 
-                          statusToTypeMap[activeStatus]
-                        )}
-                        className="ml-4 text-red hover:text-red-700"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      
+                      {/* Bouton Supprimer fichier (seulement pour admin) */}
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteFileClick(
+                            item.id, 
+                            statusToTypeMap[activeStatus]
+                          )}
+                          className="ml-4 text-red hover:text-red-700"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </li>
                   ) : (
                     <li
@@ -573,15 +579,19 @@ const SubjectDetails = () => {
                           {item.title}
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleDeleteFileClick(
-                          item.id, 
-                          statusToTypeMap[activeStatus]
-                        )}
-                        className="ml-4 text-red hover:text-red-700"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      
+                      {/* Bouton Supprimer vidéo (seulement pour admin) */}
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteFileClick(
+                            item.id, 
+                            statusToTypeMap[activeStatus]
+                          )}
+                          className="ml-4 text-red hover:text-red-700"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </li>
                   )
                 )}
