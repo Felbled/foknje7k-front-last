@@ -15,7 +15,7 @@ import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function DiscordBanner() {
-  const discordInviteLink = "https://discord.gg/v5f6c726";
+  const discordInviteLink = "https://discord.gg/umyBUZkW7U";
   const [showPopup, setShowPopup] = useState(false);
   const [showQRPopup, setShowQRPopup] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -60,7 +60,7 @@ export default function DiscordBanner() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 relative overflow-hidden">
+    <div className="relative max-w-4xl p-6 mx-auto overflow-hidden">
       {/* Icônes flottantes animées en arrière-plan */}
       <div className="absolute inset-0 overflow-hidden -z-10">
         {floatingIcons.map((icon) => (
@@ -87,7 +87,7 @@ export default function DiscordBanner() {
       <AnimatePresence>
         {showQRPopup && (
           <motion.div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
             onClick={toggleQRPopup}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -95,7 +95,7 @@ export default function DiscordBanner() {
             transition={{ duration: 0.3 }}
           >
             <motion.div 
-              className="relative bg-gradient-to-br from-white to-gray-100 rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl"
+              className="relative w-full max-w-sm overflow-hidden shadow-2xl bg-gradient-to-br from-white to-gray-100 rounded-2xl"
               onClick={e => e.stopPropagation()}
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -103,12 +103,12 @@ export default function DiscordBanner() {
               transition={{ duration: 0.3, ease: "backOut" }}
             >
               <button 
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10 bg-white/80 rounded-full p-2 transition-all hover:scale-110"
+                className="absolute z-10 p-2 text-gray-500 transition-all rounded-full top-4 right-4 hover:text-gray-800 bg-white/80 hover:scale-110"
                 onClick={toggleQRPopup}
               >
                 <FontAwesomeIcon icon={faTimes} className="text-xl" />
               </button>
-              <div className="p-8 flex flex-col items-center">
+              <div className="flex flex-col items-center p-8">
                 <motion.div
                   initial={{ rotate: -5, scale: 0.8 }}
                   animate={{ rotate: 0, scale: 1 }}
@@ -121,7 +121,7 @@ export default function DiscordBanner() {
                 </motion.div>
                 
                 <motion.h3 
-                  className="text-xl font-bold text-gray-800 mb-4"
+                  className="mb-4 text-xl font-bold text-gray-800"
                   initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -130,7 +130,7 @@ export default function DiscordBanner() {
                 </motion.h3>
                 
                 <motion.div 
-                  className="bg-white p-4 rounded-lg border-4 border-indigo-600 mb-6 shadow-lg"
+                  className="p-4 mb-6 bg-white border-4 border-indigo-600 rounded-lg shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.4 }}
@@ -138,12 +138,12 @@ export default function DiscordBanner() {
                   <img 
                     src={Qrcode} 
                     alt="QR Code Discord"
-                    className="w-48 h-48 object-contain"
+                    className="object-contain w-48 h-48"
                   />
                 </motion.div>
                 
                 <motion.p 
-                  className="text-gray-600 text-center mb-6"
+                  className="mb-6 text-center text-gray-600"
                   initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
@@ -160,11 +160,11 @@ export default function DiscordBanner() {
                     href={discordInviteLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group"
+                    className="flex items-center font-medium text-indigo-600 hover:text-indigo-800 group"
                   >
                     <FontAwesomeIcon icon={faDiscord} className="mr-2 transition-transform group-hover:scale-110" />
                     <span>Ou rejoindre via le lien direct</span>
-                    <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                    <span className="ml-2 transition-transform group-hover:translate-x-1">→</span>
                   </a>
                 </motion.div>
               </div>
@@ -175,7 +175,7 @@ export default function DiscordBanner() {
 
       {/* Bannière principale */}
       <motion.div 
-        className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl shadow-xl overflow-hidden relative"
+        className="relative overflow-hidden shadow-xl bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -207,7 +207,7 @@ export default function DiscordBanner() {
           ))}
         </div>
         
-        <div className="md:flex relative z-10">
+        <div className="relative z-10 md:flex">
           {/* Section visuelle */}
           <div 
             className="md:w-2/5 p-8 flex flex-col justify-center items-center bg-indigo-800 border-r-[2px] border-[#5865F2]"
@@ -215,7 +215,7 @@ export default function DiscordBanner() {
             onMouseLeave={() => setIsHovered(false)}
           >
             <motion.div 
-              className="bg-white/20 p-6 rounded-full mb-4 cursor-pointer transition-all duration-300 hover:bg-white/30 group relative"
+              className="relative p-6 mb-4 transition-all duration-300 rounded-full cursor-pointer bg-white/20 hover:bg-white/30 group"
               onClick={togglePopup}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -234,7 +234,7 @@ export default function DiscordBanner() {
               />
             </motion.div>
             <motion.h3 
-              className="text text-xl font-bold text-center "
+              className="text-xl font-bold text-center text "
               animate={{ 
                 textShadow: isHovered 
                   ? ["0 0 0px rgba(255,255,255,0)", "0 0 10px rgba(255,255,255,0.5)", "0 0 0px rgba(255,255,255,0)"] 
@@ -247,9 +247,9 @@ export default function DiscordBanner() {
           </div>
 
           {/* Contenu */}
-          <div className="md:w-3/5 p-8 bg-white dark:bg-gray-800">
+          <div className="p-8 bg-white md:w-3/5 dark:bg-gray-800">
             <motion.h2 
-              className="text-2xl font-bold text-gray-800 dark:text- mb-2"
+              className="mb-2 text-2xl font-bold text-gray-800 dark:text-"
               initial={{ x: -10, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
@@ -258,7 +258,7 @@ export default function DiscordBanner() {
             </motion.h2>
             
             <motion.p 
-              className="text-gray-600 dark:text-gray-300 mb-6"
+              className="mb-6 text-gray-600 dark:text-gray-300"
               initial={{ x: -10, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -292,7 +292,7 @@ export default function DiscordBanner() {
             </motion.div>
 
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4"
+              className="flex flex-col gap-4 sm:flex-row"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
@@ -301,13 +301,13 @@ export default function DiscordBanner() {
                 href={discordInviteLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-700  font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center group relative overflow-hidden"
+                className="relative flex items-center justify-center flex-1 px-4 py-3 overflow-hidden font-bold transition-all duration-300 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-700 group"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 {/* Effet de vague au survol */}
                 <div className="absolute inset-0 overflow-hidden">
-                  <div className="absolute -inset-10 bg-gradient-to-r from-white/10 via-white/30 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shine" />
+                  <div className="absolute transition-opacity duration-500 opacity-0 -inset-10 bg-gradient-to-r from-white/10 via-white/30 to-white/10 group-hover:opacity-100 animate-shine" />
                 </div>
                 
                 <FontAwesomeIcon 
@@ -333,13 +333,13 @@ export default function DiscordBanner() {
               
               <motion.button
                 onClick={toggleQRPopup}
-                className="flex items-center justify-center bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800 font-bold py-3 px-4 rounded-lg transition-all duration-300 group relative overflow-hidden"
+                className="relative flex items-center justify-center px-4 py-3 overflow-hidden font-bold text-gray-800 transition-all duration-300 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 group"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <FontAwesomeIcon 
                   icon={faQrcode} 
-                  className="text-xl mr-2 transition-transform group-hover:scale-110" 
+                  className="mr-2 text-xl transition-transform group-hover:scale-110" 
                 />
                 QR Code
               </motion.button>
@@ -357,7 +357,7 @@ const FeatureCard = ({ icon, title }: {
   title: string 
 }) => (
   <motion.div 
-    className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+    className="flex items-center p-3 space-x-3 transition-colors rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
     whileHover={{ 
       y: -5,
       boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
@@ -367,6 +367,6 @@ const FeatureCard = ({ icon, title }: {
     <motion.div whileHover={{ rotate: 10, scale: 1.2 }}>
       {icon}
     </motion.div>
-    <span className="text-gray-700 dark:text-gray-200 font-medium">{title}</span>
+    <span className="font-medium text-gray-700 dark:text-gray-200">{title}</span>
   </motion.div>
 );
