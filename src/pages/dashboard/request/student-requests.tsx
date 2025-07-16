@@ -18,6 +18,7 @@ import {
 import {
   getAllStudentRequests,
   respondOfferService,
+  getAvailableSubjects,
 } from "../../../services/student-offer";
 
 interface RequestData {
@@ -29,6 +30,9 @@ interface RequestData {
   startDate: string;
   endDate: string;
   paymentImageUrl: string;
+  subjects: string;
+  subjectCount: number;
+  totalPrice: string;
 }
 
 type TableData = Record<string, any>;
@@ -38,10 +42,11 @@ const Requests = () => {
   const [selectedRow, setSelectedRow] = useState<RequestData | null>(null);
   const [data, setData] = useState<RequestData[]>([]);
   const [originalData, setOriginalData] = useState<RequestData[]>([]);
+  const [subjectsList, setSubjectsList] = useState<any[]>([]);
   const [slectedStatus, setSelectedStatus] = useState<"ACCEPTED" | "REJECTED">("ACCEPTED");
   const [confirmAction, setConfirmAction] = useState("");
   const [loading, setLoading] = useState(true);
-  
+
   const [searchName, setSearchName] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<"asc" | "desc" | "none">("none");
@@ -49,23 +54,32 @@ const Requests = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const subjectsRes = await getAvailableSubjects();
+      const subjectsArr = Array.isArray(subjectsRes) ? subjectsRes : subjectsRes.data || [];
+      setSubjectsList(subjectsArr);
+
       const res = await getAllStudentRequests();
-      
-      console.log("Données reçues de l'API:", res.data);
-      
-      const formattedData = res.data.map((item: any) => ({
-        ...item,
-        id: item.id,
-        nom: item.studentName || "Inconnu",
-        offerType: item.studentOffer?.title || "Type inconnu",
-        status: item.status,
-        createdAt: item.requestDate,
-        startDate: item.startDate,
-        endDate: item.status === "PENDING" ? "N/A" : item.endDate,
-        paymentImageUrl: item.paymentImageUrl || "#",
-      }));
-      
-      console.log("Données formatées:", formattedData);
+
+      const formattedData = res.data.map((item: any) => {
+        const subjectCount = Array.isArray(item.subjectIds) ? item.subjectIds.length : 0;
+        const unitPrice = item.studentOffer?.price ?? 0;
+        const total = unitPrice * subjectCount;
+
+        return {
+          ...item,
+          id: item.id,
+          nom: item.studentName || "Inconnu",
+          offerType: item.studentOffer?.title || "Type inconnu",
+          status: item.status,
+          createdAt: item.requestDate,
+          startDate: item.startDate,
+          endDate: item.status === "PENDING" ? "N/A" : item.endDate,
+          paymentImageUrl: item.paymentImageUrl || "#",
+          subjectCount,
+          totalPrice: total === 0 ? "Free" : `${total} TND`,
+        };
+      });
+
       setData(formattedData);
       setOriginalData(formattedData);
     } catch (e) {
@@ -80,78 +94,47 @@ const Requests = () => {
   }, []);
 
   useEffect(() => {
-    console.log("--- FILTRE DEBOGAGE ---");
-    console.log("Original Data:", originalData);
-    
-    if (originalData.length === 0) {
-      console.log("Données originales vides - retour");
-      return;
-    }
+    if (originalData.length === 0) return;
 
     let filteredData = [...originalData];
-    console.log("Données initiales (après copie):", filteredData);
 
-    // Filtre par nom
     if (searchName.trim()) {
       const searchTerm = searchName.toLowerCase().trim();
-      console.log(`Filtre par nom: '${searchTerm}'`);
-      
-      filteredData = filteredData.filter(item => {
-        const nom = item.nom.toLowerCase();
-        console.log(`Item [${item.id}] nom: ${nom} - match: ${nom.includes(searchTerm)}`);
-        return nom.includes(searchTerm);
-      });
-      console.log("Après filtre par nom:", filteredData);
+      filteredData = filteredData.filter((item) =>
+        item.nom.toLowerCase().includes(searchTerm)
+      );
     }
 
-    // Filtre par statut
     if (selectedStatusFilter !== "all") {
-      console.log(`Filtre par statut: ${selectedStatusFilter}`);
-      
-      filteredData = filteredData.filter(item => {
-        console.log(`Item [${item.id}] statut: ${item.status} - match: ${item.status === selectedStatusFilter}`);
-        return item.status === selectedStatusFilter;
-      });
-      console.log("Après filtre par statut:", filteredData);
+      filteredData = filteredData.filter(
+        (item) => item.status === selectedStatusFilter
+      );
     }
 
-    // Tri par date avec critères multiples
     if (dateFilter !== "none") {
-      console.log(`Tri par date: ${dateFilter}`);
-      
       filteredData.sort((a, b) => {
-        // 1. Comparaison par date de création (critère principal)
         const dateA = new Date(a.createdAt);
         const dateB = new Date(b.createdAt);
-        let comparison = dateFilter === "asc" 
-          ? dateA.getTime() - dateB.getTime() 
-          : dateB.getTime() - dateA.getTime();
-        
-        // 2. Si les dates de création sont identiques, tri par ID
+        let comparison =
+          dateFilter === "asc"
+            ? dateA.getTime() - dateB.getTime()
+            : dateB.getTime() - dateA.getTime();
+
         if (comparison === 0) {
-          console.log(`Dates identiques - tri par ID [${a.id} vs ${b.id}]`);
-          comparison = dateFilter === "asc" 
-            ? a.id - b.id 
-            : b.id - a.id;
+          comparison = dateFilter === "asc" ? a.id - b.id : b.id - a.id;
         }
-        
-        // 3. Si les IDs sont identiques (très improbable), tri par date de début
+
         if (comparison === 0 && a.startDate && b.startDate) {
-          console.log(`IDs identiques - tri par date de début [${a.id}]`);
           const startA = new Date(a.startDate);
           const startB = new Date(b.startDate);
-          comparison = dateFilter === "asc" 
-            ? startA.getTime() - startB.getTime() 
-            : startB.getTime() - startA.getTime();
+          comparison =
+            dateFilter === "asc"
+              ? startA.getTime() - startB.getTime()
+              : startB.getTime() - startA.getTime();
         }
-        
-        console.log(
-          `Comparaison finale [${a.id} vs ${b.id}]: ${comparison}`
-        );
-        
+
         return comparison;
       });
-      console.log("Après tri par date:", filteredData);
     }
 
     setData(filteredData);
@@ -182,7 +165,6 @@ const Requests = () => {
 
   const handleActionConfirm = async () => {
     if (!selectedRow) return;
-    
     try {
       await respondOfferService(selectedRow.id, slectedStatus);
       await fetchData();
@@ -197,23 +179,22 @@ const Requests = () => {
     const requestRow = row as RequestData;
     return (
       <div className="flex items-center justify-center space-x-2">
-        {requestRow.status === "PENDING" && (
+        {requestRow.status === "PENDING" ? (
           <>
             <button
-              className="bg-primary_bg px-3 py-1 text-white rounded-full"
+              className="px-3 py-1 text-white rounded-full bg-primary_bg"
               onClick={() => handleActionClick(requestRow, "Accepted", "ACCEPTED")}
             >
               Accept
             </button>
             <button
               onClick={() => handleActionClick(requestRow, "Rejected", "REJECTED")}
-              className="bg-red text-white px-3 py-1 rounded-full"
+              className="px-3 py-1 text-white rounded-full bg-red"
             >
               Reject
             </button>
           </>
-        )}
-        {requestRow.status !== "PENDING" && (
+        ) : (
           <span className="text-gray-500">
             {requestRow.status === "ACCEPTED" ? "Accepted" : "Rejected"}
           </span>
@@ -227,7 +208,7 @@ const Requests = () => {
     return (
       <div className="flex items-center justify-center space-x-2">
         <a
-          className="bg-text px-3 py-1 text-white rounded-full"
+          className="px-3 py-1 text-white rounded-full bg-text"
           href={requestRow.paymentImageUrl}
           target="_blank"
           rel="noreferrer"
@@ -239,9 +220,9 @@ const Requests = () => {
   };
 
   return (
-    <div className="p-1 lg:p-10 w-full">
-      <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center mb-5 space-y-4 md:space-y-0">
-        <h1 className="text-title font-montserrat_bold text-2xl md:text-3xl">
+    <div className="w-full p-1 lg:p-10">
+      <div className="flex flex-col items-start justify-between w-full mb-5 space-y-4 md:flex-row md:items-center md:space-y-0">
+        <h1 className="text-2xl text-title font-montserrat_bold md:text-3xl">
           Les Demandes des élèves
         </h1>
       </div>
@@ -295,12 +276,12 @@ const Requests = () => {
               fullWidth
               variant="contained"
               onClick={handleResetFilters}
-              sx={{ 
+              sx={{
                 height: '56px',
                 backgroundColor: '#4CAF50',
                 '&:hover': {
                   backgroundColor: '#388E3C',
-                }
+                },
               }}
             >
               Réinitialiser les filtres
@@ -309,26 +290,36 @@ const Requests = () => {
         </Grid>
       </Box>
 
-      {/* Contenu principal */}
+      {/* Table */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex items-center justify-center h-64">
           <p className="text-lg text-gray-500">Chargement en cours...</p>
         </div>
       ) : data.length === 0 ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex items-center justify-center h-64">
           <p className="text-lg text-gray-500">Aucune donnée disponible</p>
         </div>
       ) : (
         <CustomTable
           title="Gérer Demandes des élèves"
-          columns={columnsRequestsStudent}
+          columns={[
+            ...columnsRequestsStudent,
+            {
+              Header: "Nombre de matières",
+              accessor: "subjectCount",
+            },
+            {
+              Header: "Prix total",
+              accessor: "totalPrice",
+            },
+          ]}
           data={data}
           actions={renderActions}
           status={renderStatus}
         />
       )}
 
-      {/* Dialogue de confirmation */}
+      {/* Confirmation Dialog */}
       <Dialog open={openConfirmDialog} onClose={handleCloseConfirmDialog}>
         <DialogTitle>Confirmer</DialogTitle>
         <DialogContent>
@@ -337,13 +328,13 @@ const Requests = () => {
         </DialogContent>
         <DialogActions>
           <button
-            className="bg-red px-2 py-1 text-white rounded"
+            className="px-2 py-1 text-white rounded bg-red"
             onClick={handleCloseConfirmDialog}
           >
             Annuler
           </button>
           <button
-            className="bg-primary px-2 py-1 text-white rounded"
+            className="px-2 py-1 text-white rounded bg-primary"
             onClick={handleActionConfirm}
           >
             {confirmAction}

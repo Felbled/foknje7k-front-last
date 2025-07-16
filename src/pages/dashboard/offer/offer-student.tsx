@@ -270,7 +270,7 @@ const OfferStudent = () => {
         subject_ids: selectedSubjects,
         payment_type: 'paymee',
       };
-      console.log('[PAYMENT] Payload for ONLINE payment:', payload);
+      
       // @ts-ignore
       const { initiatePaymeePaymentService } = await import("../../../services/payment-service");
       const result = await initiatePaymeePaymentService(payload);
