@@ -80,7 +80,7 @@ const Subject: React.FC = () => {
 
     if (profile) {
       setIsEdit(true);
-      setModalData(currentItem);
+      setModalData(profile);
     } else {
       setIsEdit(false);
       setModalData(null);

@@ -207,20 +207,25 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
     if (mainImageFile) {
       preparedFormData.append("mainImage", mainImageFile);
     }
-    if (
-      !mainImageFile ||
-      !backgroundImageFile ||
-      !formData.mainImageUrl ||
-      !formData.backgroundImageUrl
-    ) {
+    if (!mainImageFile && !formData.mainImageUrl) {
       if (snackbarContext) {
         snackbarContext.showMessage(
           "Erreur",
-          "Veuillez importer une image",
+          "Veuillez importer une image de profil",
           "error"
         );
       }
-      return; // Add return to prevent proceeding if images are missing
+      return;
+    }
+    if (!backgroundImageFile && !formData.backgroundImageUrl) {
+      if (snackbarContext) {
+        snackbarContext.showMessage(
+          "Erreur",
+          "Veuillez importer une image de couverture",
+          "error"
+        );
+      }
+      return;
     }
   
     onButtonClick(preparedFormData);
@@ -237,13 +242,13 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
       aria-describedby="modal-description"
     >
       <Box className="bg-backgroundHome absolute top-10 left-1/2 transform -translate-x-1/2 w-11/12 sm:w-9/12 md:w-7/12 lg:w-6/12 xl:w-5/12 shadow p-5 sm:p-10 max-h-[calc(100vh-80px)] overflow-y-auto">
-        <div className="w-full flex justify-center mb-5">
-          <h1 className="font-montserrat_semi_bold text-center text-primary text-3xl">
+        <div className="flex justify-center w-full mb-5">
+          <h1 className="text-3xl text-center font-montserrat_semi_bold text-primary">
             {modalTitle}
           </h1>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-evenly">
-          <div className="w-1/3 h-40 my-2 flex items-center justify-center">
+        <div className="flex flex-col items-center md:flex-row justify-evenly">
+          <div className="flex items-center justify-center w-1/3 h-40 my-2">
             <label className="flex flex-col items-center cursor-pointer">
               {backgroundImageFile || formData.backgroundImageUrl ? (
                 <img
@@ -253,10 +258,10 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
                       : formData.backgroundImageUrl
                   }
                   alt="Cover"
-                  className="w-80 h-40 object-cover rounded-3xl"
+                  className="object-cover h-40 w-80 rounded-3xl"
                 />
               ) : (
-                <div className="w-80 h-40 rounded-3xl border-2 border-primary flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center justify-center h-40 border-2 w-80 rounded-3xl border-primary">
                   <AddAPhotoIcon />
                   <p className="text-sm text-title font-montserrat_regular">
                     Add a cover photo
@@ -274,7 +279,7 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
             </label>
           </div>
 
-          <div className="w-1/3 h-40 my-2 flex items-center justify-center">
+          <div className="flex items-center justify-center w-1/3 h-40 my-2">
             <label className="flex flex-col items-center cursor-pointer">
               {mainImageFile || formData.mainImageUrl ? (
                 <img
@@ -284,10 +289,10 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
                       : formData.mainImageUrl
                   }
                   alt="Profile"
-                  className="w-40 h-40 object-cover rounded-3xl"
+                  className="object-cover w-40 h-40 rounded-3xl"
                 />
               ) : (
-                <div className="w-40 h-40 rounded-3xl border-2 border-primary flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center justify-center w-40 h-40 border-2 rounded-3xl border-primary">
                   <AddAPhotoIcon />
                   <p className="text-sm text-title font-montserrat_regular">
                     Add a profile Photo
@@ -304,7 +309,7 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <CustomInput
             label="Speciality"
             inputType="text"
@@ -338,7 +343,7 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
         </div>
 
         <div className="my-5">
-          <h2 className="text-xl font-montserrat_semi_bold mb-2">
+          <h2 className="mb-2 text-xl font-montserrat_semi_bold">
             Ajouter Section
           </h2>
           <div className="flex space-x-4">
@@ -367,11 +372,11 @@ const SubjectModal: React.FC<ProfileModalProps> = ({
               onClick={handleAddSection}
             />
           </div>
-          <div className="w-full flex items-center">
+          <div className="flex items-center w-full">
             {formData.sections.map((section, index) => (
               <div key={index} className="flex-row">
                 <p
-                  className="m-1 px-3 rounded-full text-white text-center"
+                  className="px-3 m-1 text-center text-white rounded-full"
                   style={{ backgroundColor: section.sectionColor }}
                 >
                   {section.sectionName}
