@@ -138,15 +138,13 @@ function SidebarItem({
   );
 }
 
-// Liste des liens avec rôles autorisés
+// Liste des liens avec rôles autorisés 
 const sidebarLinks = [
   { path: "/offer-teacher", name: "Offre Professeur", roles: ["ROLE_SUPER_TEACHER", "ROLE_ADMIN"] },
   { path: "/offer-student", name: "Offre Étudiant", roles: ["ROLE_STUDENT", "ROLE_ADMIN"] },
   { path: "/subscription", name: "Abonnement", roles: ["ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
   { path: "/management-prof", name: "Gestion Professeurs", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
   { path: "/management-student", name: "Gestion Étudiants", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
-  { path: "/management-course", name: "Gestion des Cours", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
-  { path: "/management-files", name: "Gestion des Fichiers", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
   { path: "/files", name: "Fichiers", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
   { path: "/calender", name: "Calendrier Live", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
   { path: "/chat", name: "Chat Room", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
@@ -279,19 +277,22 @@ const Home: React.FC = () => {
     <div className="flex h-full pt-24">
       {/* Sidebar - grand écran */}
       <aside className="hidden h-screen md:block">
-        <nav className="h-full flex flex-col bg-[#f2f9f7] border-b border-r border-[#09745f]"> 
+        <nav className="flex flex-col bg-[#f2f9f7] border-b border-r border-[#09745f]"> 
           <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-2 overflow-hidden">
+            <NavLink 
+              to="/home"
+              className="flex items-center gap-2 overflow-hidden group"
+            >
               <FontAwesomeIcon
                 icon={faGraduationCap}
                 className={`text-[#09745f] transition-all ${
                   expanded ? "w-7 h-7 animate-spin [animation-duration:4s]" : "w-0 h-0"
-                }`}
+                } group-hover:animate-pulse`}
               />
 
               {expanded && (
                 <span
-                  className="text-lg font-semibold text-[#09745f] animate-[fadeInLeft_1s_ease-out_forwards]"
+                  className="text-lg font-semibold text-[#09745f] animate-[fadeInLeft_1s_ease-out_forwards] group-hover:text-[#048c6b] transition-colors"
                   style={{
                     animationName: 'fadeInLeft',
                     animationDuration: '1s',
@@ -302,7 +303,7 @@ const Home: React.FC = () => {
                   Tableau de Bord
                 </span>
               )}
-            </div>
+            </NavLink>
 
             <button
               onClick={() => setExpanded((curr) => !curr)}
@@ -341,7 +342,17 @@ const Home: React.FC = () => {
         transitionDuration={{ enter: 500, exit: 500 }}
       >
         <aside className="w-64 h-full p-4 bg-white shadow-md">
-          <h2 className="mb-4 text-lg font-bold">Tableau de Bord</h2>
+          <NavLink 
+            to="/home"
+            className="flex items-center gap-2 mb-4 group"
+          >
+            <FontAwesomeIcon
+              icon={faGraduationCap}
+              className="w-7 h-7 text-[#09745f] group-hover:animate-pulse"
+            />
+            <h2 className="text-lg font-bold group-hover:text-[#048c6b]">Tableau de Bord</h2>
+          </NavLink>
+          
           <nav>
             <ul>
               {sidebarLinks.map(
@@ -354,8 +365,8 @@ const Home: React.FC = () => {
                         className={({ isActive }) =>
                           `block p-2 rounded ps-12 ${
                             isActive
-                              ? "bg-gradient-to-tr from-[#09745f] via-[#041b8c] to-[#07b98e] text-white"
-                              : "hover:bg-[#bda2eb] text-gray-600"
+                              ? "bg-[#09745f] to text-white"
+                              : "hover:bg-[#07b98e] text-gray-600"
                           }`
                         }
                       >
@@ -381,8 +392,10 @@ const Home: React.FC = () => {
       <main className="flex-1">
         <div className="h-full px-5 lg:px-10">
           <div className="h-full p-4 rounded-lg shadow-sm">
-            <div className="flex flex-col items-center px-4 md:px-12">
-              <WelcomeCard />
+            <div className="flex flex-col items-center  px-4 md:px-12">
+              <div className="-mt-[40px] w-full">
+    <WelcomeCard />
+  </div>
              
               <div className="flex flex-wrap justify-center w-full pt-10 mb-10">
                 {profileData.filter(item => item.active === true).map((item) => (

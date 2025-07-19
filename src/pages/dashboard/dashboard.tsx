@@ -121,8 +121,6 @@ const sidebarLinks = [
   { path: "/subscription", name: "Abonnement", roles: ["ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
   { path: "/management-prof", name: "Gestion Professeurs", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
   { path: "/management-student", name: "Gestion Étudiants", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
-  { path: "/management-course", name: "Gestion des Cours", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
-  { path: "/management-files", name: "Gestion des Fichiers", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
   { path: "/files", name: "Fichiers", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
   { path: "/calender", name: "Calendrier Live", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
   { path: "/chat", name: "Chat Room", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
@@ -142,14 +140,12 @@ function Breadcrumb() {
       'offer-student': 'Offre Étudiant',
       'subscription': 'Abonnement',
       'management-prof': 'Gestion Professeurs',
-      'management-student': 'Gestion etudiants',
-      'management-course': 'Gestion des Cours',
-      'management-files': 'Gestion des Fichiers',
+      'management-student': 'Gestion Étudiants',
       'files': 'Fichiers',
       'calender': 'Calendrier Live',
       'chat': 'Chat Room',
       'requests-prof': 'Demandes des Professeurs',
-      'requests-student': 'Demandes des etudiants',
+      'requests-student': 'Demandes des Étudiants',
       'stats': 'Statistiques',
       'dashboard': 'Tableau de Bord'
     };
@@ -166,18 +162,45 @@ function Breadcrumb() {
         .replace(/\b\w/g, (l) => l.toUpperCase())
     );
 
-  const breadcrumb = ['Accueil', ...pathSegments];
-
   return (
     <div className="w-full flex items-center space-x-2 text-sm font-montserrat_medium text-title">
-      {breadcrumb.map((crumb, index) => (
-        <div key={index} className="flex items-center gap-1">
-          <FontAwesomeIcon
-            icon={getIconByText(crumb)}
-            className="w-4 h-4 text-gray-600"
-          />
-          <span>{crumb}</span>
-          {index < breadcrumb.length - 1 && (
+      {/* Lien Accueil */}
+      <NavLink to="/" className="flex items-center gap-1 hover:text-[#09745f] transition-colors">
+        <FontAwesomeIcon
+          icon={faHome}
+          className="w-4 h-4 text-gray-600"
+        />
+        <span>Accueil</span>
+      </NavLink>
+      
+      {pathSegments.length > 0 && (
+        <span className="mx-1 text-gray-400">{">"}</span>
+      )}
+
+      {pathSegments.map((crumb, index) => (
+        <div key={index} className="flex items-center">
+          {crumb === "Tableau De Bord" ? (
+            <NavLink 
+              to="/home" 
+              className="flex items-center gap-1 hover:text-[#09745f] transition-colors"
+            >
+              <FontAwesomeIcon
+                icon={getIconByText(crumb)}
+                className="w-4 h-4 text-gray-600"
+              />
+              <span>{crumb}</span>
+            </NavLink>
+          ) : (
+            <div className="flex items-center gap-1">
+              <FontAwesomeIcon
+                icon={getIconByText(crumb)}
+                className="w-4 h-4 text-gray-600"
+              />
+              <span>{crumb}</span>
+            </div>
+          )}
+          
+          {index < pathSegments.length - 1 && (
             <span className="mx-1 text-gray-400">{">"}</span>
           )}
         </div>
@@ -198,30 +221,35 @@ const Dashboard = () => {
     <div className="flex h-full pt-24">
       {/* Sidebar - grand écran */}
       <aside className="h-screen hidden md:block">
-        <nav className="h-full flex flex-col bg-[#f2f9f7] border-b border-r border-[#09745f]"> 
-          <div className="p-4  flex justify-between items-center">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <FontAwesomeIcon
-                icon={faGraduationCap}
-                className={`text-[#09745f] transition-all ${
-                  expanded ? "w-7 h-7 animate-spin [animation-duration:4s]" : "w-0 h-0"
-                }`}
-              />
+        <nav className="flex flex-col bg-[#f2f9f7] border-b border-r border-[#09745f]"> 
+          <div className="p-4 flex justify-between items-center">
+      {/* Début de la modification - Rendre le titre cliquable */}
+      <NavLink 
+        to="/home"
+        className="flex items-center gap-2 overflow-hidden group"
+      >
+        <FontAwesomeIcon
+          icon={faGraduationCap}
+          className={`text-[#09745f] transition-all ${
+            expanded ? "w-7 h-7 animate-spin [animation-duration:4s]" : "w-0 h-0"
+          } group-hover:animate-pulse`}
+        />
 
-              {expanded && (
-                <span
-                  className="text-lg font-semibold text-[#09745f] animate-[fadeInLeft_1s_ease-out_forwards]"
-                  style={{
-                    animationName: 'fadeInLeft',
-                    animationDuration: '1s',
-                    animationTimingFunction: 'ease-out',
-                    animationFillMode: 'forwards',
-                  }}
-                >
-                  Tableau de Bord
-                </span>
-              )}
-            </div>
+        {expanded && (
+          <span
+            className="text-lg font-semibold text-[#09745f] animate-[fadeInLeft_1s_ease-out_forwards] group-hover:text-[#048c6b] transition-colors"
+            style={{
+              animationName: 'fadeInLeft',
+              animationDuration: '1s',
+              animationTimingFunction: 'ease-out',
+              animationFillMode: 'forwards',
+            }}
+          >
+            Tableau de Bord
+          </span>
+        )}
+      </NavLink>
+            
 
             <button
               onClick={() => setExpanded((curr) => !curr)}

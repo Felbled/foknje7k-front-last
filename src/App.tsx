@@ -53,8 +53,6 @@ function App() {
                 path="management-student"
                 element={<ManagementStudent />}
               />
-              <Route path="management-course" element={<ManagementCourse />} />
-              <Route path="management-files" element={<ManagementFiles />} />
               <Route path="offer-teacher" element={<Offer />} />
               <Route path="offer-student" element={<OfferStudent />} />
               <Route path="subscription" element={<Subscription />} />
