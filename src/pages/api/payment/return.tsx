@@ -5,11 +5,18 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import { verifyPaymentService } from "../../../services/payment-service";
 import { SnackbarContext } from "../../../config/hooks/use-toast";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../redux/store/store";
 
 const PaymentReturn = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const snackbarContext = useContext(SnackbarContext);
+  
+  // Get user role from Redux store to determine navigation path
+  const userRole = useSelector(
+    (state: RootState) => state?.user?.userData?.role?.name
+  );
   
   const [isLoading, setIsLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'failed' | 'pending'>('pending');
@@ -87,11 +94,27 @@ const PaymentReturn = () => {
   }, [searchParams]);
 
   const handleReturnToDashboard = () => {
-    navigate('/dashboard/offer-student');
+    // Navigate based on user role
+    if (userRole === "ROLE_STUDENT") {
+      navigate('/dashboard/offer-student');
+    } else if (userRole === "ROLE_SUPER_TEACHER" || userRole === "ROLE_ADMIN") {
+      navigate('/dashboard/offer-teacher');
+    } else {
+      // Fallback to student offers for other roles
+      navigate('/dashboard/offer-student');
+    }
   };
 
   const handleRetryPayment = () => {
-    navigate('/dashboard/offer-student');
+    // Navigate based on user role
+    if (userRole === "ROLE_STUDENT") {
+      navigate('/dashboard/offer-student');
+    } else if (userRole === "ROLE_SUPER_TEACHER" || userRole === "ROLE_ADMIN") {
+      navigate('/dashboard/offer-teacher');
+    } else {
+      // Fallback to student offers for other roles
+      navigate('/dashboard/offer-student');
+    }
   };
 
   if (isLoading) {

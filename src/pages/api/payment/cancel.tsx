@@ -4,16 +4,39 @@ import { Button, Typography, Box } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../redux/store/store";
 
 const PaymentCancel = () => {
   const navigate = useNavigate();
+  
+  // Get user role from Redux store to determine navigation path
+  const userRole = useSelector(
+    (state: RootState) => state?.user?.userData?.role?.name
+  );
 
   const handleReturnToDashboard = () => {
-    navigate('/dashboard/offer-student');
+    // Navigate based on user role
+    if (userRole === "ROLE_STUDENT") {
+      navigate('/dashboard/offer-student');
+    } else if (userRole === "ROLE_SUPER_TEACHER" || userRole === "ROLE_ADMIN") {
+      navigate('/dashboard/offer-teacher');
+    } else {
+      // Fallback to student offers for other roles
+      navigate('/dashboard/offer-student');
+    }
   };
 
   const handleRetryPayment = () => {
-    navigate('/dashboard/offer-student');
+    // Navigate based on user role
+    if (userRole === "ROLE_STUDENT") {
+      navigate('/dashboard/offer-student');
+    } else if (userRole === "ROLE_SUPER_TEACHER" || userRole === "ROLE_ADMIN") {
+      navigate('/dashboard/offer-teacher');
+    } else {
+      // Fallback to student offers for other roles
+      navigate('/dashboard/offer-student');
+    }
   };
 
   return (
