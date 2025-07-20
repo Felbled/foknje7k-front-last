@@ -171,6 +171,14 @@ const OfferStudent = () => {
     }
   };
 
+  // Calculate total price based on selected subjects' individual prices
+  const calculateTotalPrice = () => {
+    return selectedSubjects.reduce((total, subjectId) => {
+      const subject = availableSubjects.find(s => s.id === subjectId);
+      return total + (subject?.price || 40); // fallback to 40 if price not found
+    }, 0);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setPaymentFile(e.target.files[0]);
@@ -199,8 +207,8 @@ const OfferStudent = () => {
 
     const formData = new FormData();
     
-    // Calculer le prix total
-    const totalPrice = selectedSubjects.length * 40;
+    // Calculer le prix total basé sur les prix individuels des matières
+    const totalPrice = calculateTotalPrice();
     formData.append("totalPrice", totalPrice.toString());
     
     // Add payment method
@@ -346,7 +354,7 @@ const OfferStudent = () => {
         <DialogContent className="px-4 py-6">
           <div className="mb-6">
             <Typography variant="h6" className="mb-3 font-montserrat_medium">
-              Choisissez les matières que vous souhaitez étudier (40 DT/matière)
+              Choisissez les matières que vous souhaitez étudier
             </Typography>
             
             <div className="grid grid-cols-2 gap-4">
@@ -365,6 +373,9 @@ const OfferStudent = () => {
                       <span className="font-montserrat_medium">{subject.speciality}</span>
                       <span className="text-sm text-gray-500">Niveau {subject.level}</span>
                       <span className="text-xs text-gray-400">Par {subject.superTeacherFullName}</span>
+                      <span className="text-sm font-semibold text-primary">
+                        {subject.price ? `${subject.price} DT` : '40 DT'}
+                      </span>
                     </div>
                     {selectedSubjects.includes(subject.id) && (
                       <CheckCircleOutlineIcon className="text-primary" />
@@ -445,13 +456,23 @@ const OfferStudent = () => {
                   </span>
                 </Typography>
                 <Typography className="font-montserrat_medium">
-                  Prix par matière:{" "}
-                  <span className="font-bold">40 DT</span>
+                  Prix détaillé:
                 </Typography>
+                <div className="ml-4 text-sm">
+                  {selectedSubjects.map(subjectId => {
+                    const subject = availableSubjects.find(s => s.id === subjectId);
+                    return (
+                      <div key={subjectId} className="flex justify-between">
+                        <span>{subject?.speciality || 'Matière'}</span>
+                        <span>{subject?.price || 40} DT</span>
+                      </div>
+                    );
+                  })}
+                </div>
                 <Typography className="mt-2 text-lg font-montserrat_semi_bold">
                   Total:{" "}
                   <span className="text-primary">
-                    {selectedSubjects.length * 40} DT
+                    {calculateTotalPrice()} DT
                   </span>
                 </Typography>
               </div>

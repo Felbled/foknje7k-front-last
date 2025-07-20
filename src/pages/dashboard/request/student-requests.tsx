@@ -64,6 +64,7 @@ const Requests = () => {
         const subjectCount = Array.isArray(item.subjectIds) ? item.subjectIds.length : 0;
         const unitPrice = item.studentOffer?.price ?? 0;
         const total = unitPrice * subjectCount;
+        const isFree = total === 0;
 
         return {
           ...item,
@@ -75,8 +76,8 @@ const Requests = () => {
           startDate: item.startDate,
           endDate: item.status === "PENDING" ? "N/A" : item.endDate,
           paymentImageUrl: item.paymentImageUrl || "#",
-          subjectCount,
-          totalPrice: total === 0 ? "Free" : `${total} TND`,
+          subjectCount: isFree ? "tous les matières" : subjectCount,
+          totalPrice: isFree ? "Free" : `${total} TND`,
         };
       });
 

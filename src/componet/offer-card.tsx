@@ -178,13 +178,13 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
         <img
           src={offer?.imageUrl || "https://via.placeholder.com/300x192?text=Offre"}
           alt={offer.title}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+          className="object-cover w-full h-full transition-transform duration-500 hover:scale-110"
         />
       </div>
 
       {offer.subscribed && (
         <div 
-          className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold"
+          className="absolute px-3 py-1 text-xs font-semibold rounded-full top-4 right-4"
           style={{ 
             backgroundColor: colors.badgeBg,
             color: colors.badgeText
@@ -194,11 +194,11 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
         </div>
       )}
 
-      <div className="p-6 flex flex-col h-full">
-        <div className="flex justify-between items-start mb-4">
+      <div className="flex flex-col h-full p-6">
+        <div className="flex items-start justify-between mb-4">
           <div>
             <h2 
-              className="text-xl font-bold mb-1"
+              className="mb-1 text-xl font-bold"
               style={{ color: colors.title }}
             >
               {offer.title}
@@ -239,18 +239,20 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           )}
         </div>
 
-        <div className="mb-4 h-16 overflow-hidden">
-          <p className="text-gray-600 text-sm">
+        <div className="h-16 mb-4 overflow-hidden">
+          <p className="text-sm text-gray-600">
             {offer.description}
           </p>
         </div>
 
-        <div className="mb-6 flex flex-col">
+        <div className="flex flex-col mb-6">
           <div 
-            className="py-3 px-4 rounded-xl mb-3 flex items-center justify-between"
+            className="flex items-center justify-between px-4 py-3 mb-3 rounded-xl"
             style={{ backgroundColor: colors.priceBg }}
           >
-            <span className="text-lg font-semibold text-gray-700">Matière/ {offer.monthlyPeriod} mois</span>
+            <span className="text-lg font-semibold text-gray-700">
+              {isOfferStudent ? `Matière/ ${offer.monthlyPeriod} mois` : `${offer.monthlyPeriod} mois`}
+            </span>
             <div className="flex items-baseline">
               <span 
                 className="text-4xl font-bold"
@@ -259,7 +261,7 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
                 {offer.price}
               </span>
               <span 
-                className="text-xl ml-1 font-medium"
+                className="ml-1 text-xl font-medium"
                 style={{ color: colors.price }}
               >
                 DT
@@ -268,18 +270,18 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           </div>
           
           {isFreeOffer && (
-            <div className="bg-blue-100 text-blue-800 text-center py-2 rounded-lg mb-4">
+            <div className="py-2 mb-4 text-center text-blue-800 bg-blue-100 rounded-lg">
               Offre 100% gratuite - Aucun paiement requis
             </div>
           )}
         </div>
 
-        <div className="mb-6 flex-grow">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+        <div className="flex-grow mb-6">
+          <h3 className="mb-3 text-lg font-semibold text-gray-800">
             Ce que vous obtenez
           </h3>
           
-          <div className="space-y-3 h-48 overflow-y-auto pr-2">
+          <div className="h-48 pr-2 space-y-3 overflow-y-auto">
             {benefitsArray.map((benefit: any, index: React.Key) => (
               <div 
                 className="flex items-start"
@@ -287,7 +289,7 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
               >
                 <CheckCircleIcon 
                   style={{ color: colors.check }} 
-                  className="mt-1 mr-3 flex-shrink-0" 
+                  className="flex-shrink-0 mt-1 mr-3" 
                 />
                 <p className="text-gray-700">{benefit}</p>
               </div>
@@ -295,10 +297,10 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           </div>
         </div>
 
-        <div className="mt-auto pt-4">
+        <div className="pt-4 mt-auto">
           {(!offer.subscribed && role !== "ROLE_ADMIN") && (
             <div
-              className="w-full text-white py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer text-center"
+              className="w-full py-3 font-semibold text-center text-white transition-all shadow-md cursor-pointer rounded-xl hover:shadow-lg"
               style={{
                 background: `linear-gradient(to right, ${colors.buttonStart}, ${colors.buttonEnd})`,
                 backgroundSize: '200% auto',
@@ -360,14 +362,14 @@ const OfferCard = ({ offer, onclick, onUpdateOffer, onDeleteOffer }) => {
           <Button
             variant="outlined"
             onClick={handleCloseAlert}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="text-gray-700 border-gray-300 hover:bg-gray-50"
           >
             Annuler
           </Button>
           <Button
             variant="contained"
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="text-white bg-red-600 hover:bg-red-700"
           >
             Supprimer
           </Button>
