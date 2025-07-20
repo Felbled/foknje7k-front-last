@@ -276,8 +276,8 @@ const Home: React.FC = () => {
   return (
     <div className="flex h-full pt-24">
       {/* Sidebar - grand écran */}
-      <aside className="hidden h-screen md:block">
-        <nav className="flex flex-col bg-[#f2f9f7] border-b border-r border-[#09745f]"> 
+      <aside className="pt-[120px] h-screen hidden md:block">
+        <nav className="flex flex-col bg-[#f2f9f7] border-t border-b border-r border-[#09745f]"> 
           <div className="flex items-center justify-between p-4">
             <NavLink 
               to="/home"
