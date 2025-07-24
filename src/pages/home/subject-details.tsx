@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useContext } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect, useRef, useState, useContext, createContext } from "react";
+import { useLocation, NavLink, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store/store";
 import { Pdf } from "../../assets/svg";
@@ -17,7 +17,8 @@ import {
   IconButton,
   Box,
   Snackbar,
-  Alert
+  Alert,
+  Drawer
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { 
@@ -27,8 +28,131 @@ import {
   deleteItemPlaylistService
 } from "../../services/playList-service";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
 import "./subject-detail.css";
+import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+import {
+  faHome,
+  faChartPie,
+  faGraduationCap,
+  faAnglesLeft,
+  faAnglesRight,
+  faTachometerAlt,
+  faUserGear,
+  faUserGraduate,
+  faChalkboardTeacher,
+  faBookOpen,
+  faFolderOpen,
+  faCalendarAlt,
+  faComments,
+  faEnvelopeOpenText,
+  faCreditCard,
+  faChartBar,
+} from "@fortawesome/free-solid-svg-icons";
+
+// CONTEXT
+const SidebarContext = createContext<{ expanded: boolean }>({ expanded: true });
+
+// Fonction pour déterminer l'icône à afficher selon le texte
+function getIconByText(text: string) {
+  const lower = text.toLowerCase();
+  if (lower === "accueil") return faHome;
+  if (lower.includes("tableau de bord")) return faChartPie;
+  if (lower.includes("abonnement")) return faCreditCard;
+  if (lower.includes("cours")) return faBookOpen;
+  if (lower.includes("fichier")) return faFolderOpen;
+  if (lower.includes("calendrier")) return faCalendarAlt;
+  if (lower.includes("chat")) return faComments;
+  if (lower.includes("statistique")) return faChartBar;
+  if (lower.includes("demande")) return faEnvelopeOpenText;
+  if (lower.includes("étudiant") || lower.includes("eleve")) return faUserGraduate;
+  if (lower.includes("professeur") || lower.includes("prof")) return faChalkboardTeacher;
+  if (lower.includes("gestion")) return faUserGear;
+  if (lower.includes("offre")) return faGraduationCap;
+  return faTachometerAlt;
+}
+
+// Composant pour les éléments de menu
+function SidebarItem({
+  text,
+  to,
+  alert,
+}: {
+  text: string;
+  to: string;
+  alert?: boolean;
+}) {
+  const { expanded } = useContext(SidebarContext);
+  const icon = <FontAwesomeIcon icon={getIconByText(text)} className={`w-4 h-4 ${expanded ? "text-gray-600" : "text-gray-700"}`} />;
+
+  return (
+    <NavLink to={to}>
+      {({ isActive }) => (
+        <li
+          className={`
+            relative flex items-center
+            ${expanded ? "py-2 px-3 gap-2" : "py-1 px-2 gap-1"}
+            my-1 font-medium rounded-md cursor-pointer
+            transition-all duration-300 group
+            ${
+              isActive
+                ? "bg-gradient-to-tr from-[#09745f] via-[#048c6b] to-[#07b98e] text-white"
+                : "hover:bg-[#5ed5b9] text-gray-600"
+            }`}
+        >
+          {isActive ? (
+            <FontAwesomeIcon icon={getIconByText(text)} className="w-4 h-4 text-white" />
+          ) : (
+            icon
+          )}
+
+          <span
+            className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${
+              expanded ? "w-52 ml-2" : "w-0 ml-0"
+            }`}
+          >
+            {text}
+          </span>
+
+          {alert && (
+            <div
+              className={`absolute right-2 w-2 h-2 rounded bg-[#07b98e] ${
+                expanded ? "" : "top-2"
+              }`}
+            ></div>
+          )}
+
+          {!expanded && (
+            <div
+              className={`
+                absolute left-full rounded-md px-2 py-1 ml-3
+                bg-[#07b98e] text-white text-sm
+                invisible opacity-0 -translate-x-3 transition-all
+                group-hover:visible group-hover:opacity-100 group-hover:translate-x-0
+              `}
+            >
+              {text}
+            </div>
+          )}
+        </li>
+      )}
+    </NavLink>
+  );
+}
+
+// Liste des liens avec rôles autorisés 
+const sidebarLinks = [
+  { path: "/offer-teacher", name: "Offre Professeur", roles: ["ROLE_SUPER_TEACHER", "ROLE_ADMIN"] },
+  { path: "/offer-student", name: "Offre Étudiant", roles: ["ROLE_STUDENT", "ROLE_ADMIN"] },
+  { path: "/subscription", name: "Abonnement", roles: ["ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
+  { path: "/management-prof", name: "Gestion Professeurs", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
+  { path: "/management-student", name: "Gestion Étudiants", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER"] },
+  { path: "/files", name: "Fichiers", roles: ["ROLE_ADMIN", "ROLE_SUPER_TEACHER", "ROLE_TEACHER"] },
+  { path: "/calender", name: "Calendrier Live", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
+  { path: "/chat", name: "Chat Room", roles: ["ROLE_ADMIN", "ROLE_TEACHER", "ROLE_SUPER_TEACHER", "ROLE_STUDENT"] },
+  { path: "/requests-prof", name: "Demandes des Professeurs", roles: ["ROLE_ADMIN"] },
+  { path: "/requests-student", name: "Demandes des Étudiants", roles: ["ROLE_ADMIN"] },
+  { path: "/stats", name: "Statistiques", roles: ["ROLE_ADMIN"] },
+];
 
 interface Video {
   id: number;
@@ -69,6 +193,7 @@ const SubjectDetails = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id");
+  const navigation = useNavigate();
   
   // Récupération du rôle utilisateur
   const role = useSelector((state: RootState) => state?.user?.userData?.role?.name);
@@ -110,6 +235,10 @@ const SubjectDetails = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const snackbarContext = useContext(SnackbarContext) as SnackbarContextType;
+
+  // États pour le sidebar
+  const [expanded, setExpanded] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const showToast = (message: string, severity: "success" | "error") => {
     if (snackbarContext?.showToast) {
@@ -387,408 +516,528 @@ const SubjectDetails = () => {
     event.preventDefault();
   };
 
-  return (
-    <div className="pt-20 md:pt-40 px-4 md:px-12 flex flex-col items-center pb-20">
-      <div className="w-full md:w-11/12 flex flex-col md:flex-row justify-between bg-purple_bg px-4 md:px-10 py-5 h-[78vh] rounded-3xl mb-5">
-        <div className="w-full md:w-9/12 h-full p-5">
-          <div className="relative w-full h-full overflow-hidden bg-black">
-            <video
-              key={videoUrl}
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              controls
-              controlsList="nodownload"
-              onContextMenu={preventContextMenu}
-              playsInline
-              preload="auto"
-            >
-              <source src={videoUrl} />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <p className="text-title text-xl md:text-2xl font-montserrat_semi_bold mt-3">
-            {activePlaylist?.title || "Video title"}
-          </p>
-          
-        </div>
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-        <div className="w-full md:w-1/4 p-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl md:text-2xl text-title font-montserrat_semi_bold">
-              Les Chapitres
-            </h2>
-            
-            {/* Bouton Ajouter chapitre (seulement pour admin) */}
-            {isAdmin && (
-              <button
-                onClick={handleCreateOpen}
-                className="bg-purple text-white rounded-full p-2 hover:bg-purple-700 transition-colors"
-                aria-label="Ajouter un chapitre"
-              >
-                <AddIcon />
-              </button>
-            )}
+  return (
+    <div className="flex h-full pt-24">
+      {/* Sidebar - grand écran */}
+      <aside className=" h-screen hidden md:block">
+        <nav className="flex flex-col bg-[#f2f9f7] border-t border-b border-r border-[#09745f]"> 
+          <div className="flex items-center justify-between p-4">
+            <NavLink 
+              to="/home"
+              className="flex items-center gap-2 overflow-hidden group"
+            >
+              <FontAwesomeIcon
+                icon={faGraduationCap}
+                className={`text-[#09745f] transition-all ${
+                  expanded ? "w-7 h-7 animate-spin [animation-duration:4s]" : "w-0 h-0"
+                } group-hover:animate-pulse`}
+              />
+
+              {expanded && (
+                <span
+                  className="text-lg font-semibold text-[#09745f] animate-[fadeInLeft_1s_ease-out_forwards] group-hover:text-[#048c6b] transition-colors"
+                  style={{
+                    animationName: 'fadeInLeft',
+                    animationDuration: '1s',
+                    animationTimingFunction: 'ease-out',
+                    animationFillMode: 'forwards',
+                  }}
+                >
+                  Tableau de Bord
+                </span>
+              )}
+            </NavLink>
+
+            <button
+              onClick={() => setExpanded((curr) => !curr)}
+              className="p-1.5 rounded-lg bg-gradient-to-r from-[#09745f] via-[#048c6b] to-[#07b98e] text-white hover:opacity-90"
+            >
+              <FontAwesomeIcon icon={expanded ? faAnglesLeft : faAnglesRight} className="w-4 h-4" />
+            </button>
           </div>
-          <ul className="overflow-y-auto h-[65vh] hide-scrollbar">
-            {subjectData?.playLists.map((playlist) => (
-              <li
-                key={playlist.id}
-                className={`bg-white rounded-xl mb-1 px-2 py-3 list-none cursor-pointer ${
-                  playlist.id === activePlaylist?.id ? "bg-purple text-primary" : ""
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div 
-                    className="text-lg font-montserrat_semi_bold flex-grow"
-                    onClick={() => handlePlaylistClick(playlist)}
-                  >
-                    {playlist.title}
-                  </div>
-                  
-                  {/* Boutons Modifier/Supprimer (seulement pour admin) */}
-                  {isAdmin && (
-                    <div className="flex space-x-1">
-                      <button
-                        className="relative bg-[#3e38db] text-white px-3 py-1 rounded-full text-sm
-                                 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-                                 hover:scale-[1.03] hover:shadow-lg hover:bg-blue-600
-                                 active:scale-95 active:shadow-md
-                                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
-                                 group"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditClick(playlist);
-                        }}
-                        aria-label="Modifier"
-                      >
-                        <FontAwesomeIcon 
-                          icon={faEdit} 
-                          className="text-red-500 group-hover:text-red-300 transition-colors duration-200"
-                        />
-                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
-                                      group-hover:opacity-100 transition-opacity duration-200
-                                      text-xs text-blue-500 text-[#3e38db] font-medium whitespace-nowrap">
-                          Modifier
-                        </span>
-                      </button>
-                      <button
-                        className="relative bg-red  px-3 py-1 rounded-full text-sm
-                                 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-                                 hover:scale-[1.03] hover:shadow-lg hover:bg-red-700
-                                 active:scale-95 active:shadow-md
-                                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2
-                                 group"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(playlist);
-                        }}
-                        aria-label="Supprimer"
-                      >
-                        <FontAwesomeIcon 
-                          icon={faTrash} 
-                          className="text-white group-hover:text-red-100 transition-colors duration-200"
-                        />
-                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
-                                      group-hover:opacity-100 transition-opacity duration-200
-                                      text-xs text-red font-medium whitespace-nowrap">
-                          Supprimer
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+
+          <SidebarContext.Provider value={{ expanded }}>
+            <ul className="flex-1 px-2">
+              {sidebarLinks.map(
+                (link) =>
+                  role && link.roles.includes(role) && (
+                    <SidebarItem key={link.path} to={"/dashboard" + link.path} text={link.name} />
+                  )
+              )}
+            </ul>
+          </SidebarContext.Provider>
+        </nav>
+      </aside>
+
+      {/* Toggle sidebar bouton mobile */}
+      <div className="absolute md:hidden right-3 top-20">
+        <IconButton onClick={toggleSidebar}>
+          <MenuOpenIcon />
+        </IconButton>
       </div>
 
-      <div className="w-full md:w-11/12 flex items-center flex-col bg-purple_bg p-4 md:p-10 rounded-xl">
-        <div className="flex mb-4 w-full items-center justify-between flex-wrap">
-          <div className="flex">
-            {statuses.map((status) => (
-              <div
-                key={status}
-                className={`capitalize font-montserrat_semi_bold text-lg px-4 py-2 cursor-pointer ${
-                  status === activeStatus ? "text-white bg-purple rounded-lg" : "text-title"
-                }`}
-                onClick={() => handleStatusClick(status)}
-              >
-                {status}
-              </div>
-            ))}
-          </div>
+      {/* Drawer mobile */}
+      <Drawer
+        anchor="right"
+        open={isSidebarOpen}
+        onClose={toggleSidebar}
+        className="sm:hidden"
+        transitionDuration={{ enter: 500, exit: 500 }}
+      >
+        <aside className="w-64 h-full p-4 bg-white shadow-md">
+          <NavLink 
+            to="/home"
+            className="flex items-center gap-2 mb-4 group"
+          >
+            <FontAwesomeIcon
+              icon={faGraduationCap}
+              className="w-7 h-7 text-[#09745f] group-hover:animate-pulse"
+            />
+            <h2 className="text-lg font-bold group-hover:text-[#048c6b]">Tableau de Bord</h2>
+          </NavLink>
           
-          {/* Bouton Ajouter un fichier (seulement pour admin) */}
-          {isAdmin && activePlaylist && (
-            <a
-              href={`http://localhost:3000/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
-              className="flex items-center gap-2 bg-purple text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <InsertDriveFileIcon sx={{ fontSize: 20 }} />
-              <span>Ajouter un fichier</span>
-            </a>
-          )}
-        </div>
-
-        <div className="w-full pt-10">
-          {filteredResources.length > 0 ? (
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-              {filteredResources
-                .filter((item) => item.isCompleted === true)
-                .sort((a, b) => a.id - b.id)
-                .map((item) =>
-                  activeStatus !== "videos" ? (
-                    <li key={item.id} className="mb-2 list-none flex justify-between items-center">
-                      <a
-                        href={item.url}
-                        className="text-title hover:underline flex items-center"
-                        target="_blank"
-                        rel="noopener noreferrer"
+          <nav>
+            <ul>
+              {sidebarLinks.map(
+                (link) =>
+                  role &&
+                  link.roles.includes(role) && (
+                    <li key={link.path} className="mb-2">
+                      <NavLink
+                        to={"/dashboard" + link.path}
+                        className={({ isActive }) =>
+                          `block p-2 rounded ps-12 ${
+                            isActive
+                              ? "bg-[#09745f] to text-white"
+                              : "hover:bg-[#07b98e] text-gray-600"
+                          }`
+                        }
                       >
-                        <img alt="pdf" src={Pdf} className="mr-2 w-8 h-8" />
-                        <p className="text-title text-lg font-montserrat_semi_bold">
-                          {item.title}
-                        </p>
-                      </a>
-                      
-                      {/* Bouton Supprimer fichier (seulement pour admin) */}
-                      {isAdmin && (
-                        <button
-                          onClick={() => handleDeleteFileClick(
-                            item.id, 
-                            statusToTypeMap[activeStatus]
-                          )}
-                          className="ml-4 text-red hover:text-red-700"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                      )}
-                    </li>
-                  ) : (
-                    <li
-                      key={item.id}
-                      className="list-none flex justify-between items-center"
-                    >
-                      <div 
-                        className="flex items-center cursor-pointer"
-                        onClick={() => handleVideoClick(item.url)}
-                      >
-                        <OndemandVideoIcon className="text-purple text-3xl" fontSize="large" />
-                        <p className="ms-4 text-title text-lg font-montserrat_semi_bold">
-                          {item.title}
-                        </p>
-                      </div>
-                      
-                      {/* Bouton Supprimer vidéo (seulement pour admin) */}
-                      {isAdmin && (
-                        <button
-                          onClick={() => handleDeleteFileClick(
-                            item.id, 
-                            statusToTypeMap[activeStatus]
-                          )}
-                          className="ml-4 text-red hover:text-red-700"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                      )}
+                        {({ isActive }) => (
+                          <>
+                            <FontAwesomeIcon 
+                              icon={getIconByText(link.name)} 
+                              className={`w-4 h-4 mr-2 ${isActive ? "text-white" : "text-gray-600"}`} 
+                            />
+                            {link.name}
+                          </>
+                        )}
+                      </NavLink>
                     </li>
                   )
-                )}
+              )}
             </ul>
-          ) : (
-            <p className="text-gray-500 text-center py-10">Aucune ressource disponible pour cette section.</p>
-          )}
+          </nav>
+        </aside>
+      </Drawer>
+
+      {/* Contenu principal */}
+      <main className="flex-1">
+        <div className=" px-4 md:px-12 flex flex-col items-center pb-20">
+          <div className="w-full md:w-11/12 flex flex-col md:flex-row justify-between bg-purple_bg px-4 md:px-10 py-5 h-[78vh] rounded-3xl mb-5">
+            <div className="w-full md:w-9/12 h-full p-5">
+              <div className="relative w-full h-full overflow-hidden bg-black">
+                <video
+                  key={videoUrl}
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  controls
+                  controlsList="nodownload"
+                  onContextMenu={preventContextMenu}
+                  playsInline
+                  preload="auto"
+                >
+                  <source src={videoUrl} />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <p className="text-title text-xl md:text-2xl font-montserrat_semi_bold mt-3">
+                {activePlaylist?.title || "Video title"}
+              </p>
+              
+            </div>
+
+            <div className="w-full md:w-1/4 p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl md:text-2xl text-title font-montserrat_semi_bold">
+                  Les Chapitres
+                </h2>
+                
+                {/* Bouton Ajouter chapitre (seulement pour admin) */}
+                {isAdmin && (
+                  <button
+                    onClick={handleCreateOpen}
+                    className="bg-purple text-white rounded-full p-2 hover:bg-purple-700 transition-colors"
+                    aria-label="Ajouter un chapitre"
+                  >
+                    <AddIcon />
+                  </button>
+                )}
+              </div>
+              <ul className="overflow-y-auto h-[65vh] hide-scrollbar">
+                {subjectData?.playLists.map((playlist) => (
+                  <li
+                    key={playlist.id}
+                    className={`bg-white rounded-xl mb-1 px-2 py-3 list-none cursor-pointer ${
+                      playlist.id === activePlaylist?.id ? "bg-purple text-primary" : ""
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div 
+                        className="text-lg font-montserrat_semi_bold flex-grow"
+                        onClick={() => handlePlaylistClick(playlist)}
+                      >
+                        {playlist.title}
+                      </div>
+                      
+                      {/* Boutons Modifier/Supprimer (seulement pour admin) */}
+                      {isAdmin && (
+                        <div className="flex space-x-1">
+                          <button
+                            className="relative bg-[#3e38db] text-white px-3 py-1 rounded-full text-sm
+                                      transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                                      hover:scale-[1.03] hover:shadow-lg hover:bg-blue-600
+                                      active:scale-95 active:shadow-md
+                                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
+                                      group"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(playlist);
+                            }}
+                            aria-label="Modifier"
+                          >
+                            <FontAwesomeIcon 
+                              icon={faEdit} 
+                              className="text-red-500 group-hover:text-red-300 transition-colors duration-200"
+                            />
+                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
+                                          group-hover:opacity-100 transition-opacity duration-200
+                                          text-xs text-blue-500 text-[#3e38db] font-medium whitespace-nowrap">
+                              Modifier
+                            </span>
+                          </button>
+                          <button
+                            className="relative bg-red  px-3 py-1 rounded-full text-sm
+                                      transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                                      hover:scale-[1.03] hover:shadow-lg hover:bg-red-700
+                                      active:scale-95 active:shadow-md
+                                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2
+                                      group"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(playlist);
+                            }}
+                            aria-label="Supprimer"
+                          >
+                            <FontAwesomeIcon 
+                              icon={faTrash} 
+                              className="text-white group-hover:text-red-100 transition-colors duration-200"
+                            />
+                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
+                                          group-hover:opacity-100 transition-opacity duration-200
+                                          text-xs text-red font-medium whitespace-nowrap">
+                              Supprimer
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="w-full md:w-11/12 flex items-center flex-col bg-purple_bg p-4 md:p-10 rounded-xl">
+            <div className="flex mb-4 w-full items-center justify-between flex-wrap">
+              <div className="flex">
+                {statuses.map((status) => (
+                  <div
+                    key={status}
+                    className={`capitalize font-montserrat_semi_bold text-lg px-4 py-2 cursor-pointer ${
+                      status === activeStatus ? "text-white bg-purple rounded-lg" : "text-title"
+                    }`}
+                    onClick={() => handleStatusClick(status)}
+                  >
+                    {status}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Bouton Ajouter un fichier (seulement pour admin) */}
+              {isAdmin && activePlaylist && (
+                <a
+                  href={`http://localhost:3000/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
+                  className="flex items-center gap-2 bg-purple text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  <InsertDriveFileIcon sx={{ fontSize: 20 }} />
+                  <span>Ajouter un fichier</span>
+                </a>
+              )}
+            </div>
+
+            <div className="w-full pt-10">
+              {filteredResources.length > 0 ? (
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  {filteredResources
+                    .filter((item) => item.isCompleted === true)
+                    .sort((a, b) => a.id - b.id)
+                    .map((item) =>
+                      activeStatus !== "videos" ? (
+                        <li key={item.id} className="mb-2 list-none flex justify-between items-center">
+                          <a
+                            href={item.url}
+                            className="text-title hover:underline flex items-center"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img alt="pdf" src={Pdf} className="mr-2 w-8 h-8" />
+                            <p className="text-title text-lg font-montserrat_semi_bold">
+                              {item.title}
+                            </p>
+                          </a>
+                          
+                          {/* Bouton Supprimer fichier (seulement pour admin) */}
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteFileClick(
+                                item.id, 
+                                statusToTypeMap[activeStatus]
+                              )}
+                              className="ml-4 text-red hover:text-red-700"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          )}
+                        </li>
+                      ) : (
+                        <li
+                          key={item.id}
+                          className="list-none flex justify-between items-center"
+                        >
+                          <div 
+                            className="flex items-center cursor-pointer"
+                            onClick={() => handleVideoClick(item.url)}
+                          >
+                            <OndemandVideoIcon className="text-purple text-3xl" fontSize="large" />
+                            <p className="ms-4 text-title text-lg font-montserrat_semi_bold">
+                              {item.title}
+                            </p>
+                          </div>
+                          
+                          {/* Bouton Supprimer vidéo (seulement pour admin) */}
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteFileClick(
+                                item.id, 
+                                statusToTypeMap[activeStatus]
+                              )}
+                              className="ml-4 text-red hover:text-red-700"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          )}
+                        </li>
+                      )
+                    )}
+                </ul>
+              ) : (
+                <p className="text-gray-500 text-center py-10">Aucune ressource disponible pour cette section.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Dialog pour supprimer un chapitre */}
+          <Dialog open={openDeleteDialog} onClose={handleDeleteClose} fullWidth maxWidth="sm">
+            <Box className="p-6">
+              <DialogTitle className="flex justify-between items-center">
+                <p className="text-title font-montserrat_bold text-2xl ">
+                  Supprimer Chapitre
+                </p>
+                <IconButton onClick={handleDeleteClose}>
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent className="space-y-6">
+                <p>Êtes-vous sûr de vouloir supprimer ce chapitre et tous ses contenus ?</p>
+                <div className="flex justify-end mt-6 space-x-4">
+                  <Button
+                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    variant="outlined"
+                    onClick={handleDeleteClose}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
+                    variant="contained"
+                    onClick={handleDeletePlaylist}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              </DialogContent>
+            </Box>
+          </Dialog>
+
+          {/* Dialog pour créer un nouveau chapitre */}
+          <Dialog open={openCreateDialog} onClose={handleCreateClose} fullWidth maxWidth="sm">
+            <Box className="p-6">
+              <DialogTitle className="flex justify-between items-center">
+                <p className="text-title font-montserrat_bold text-2xl">
+                  Créer un nouveau chapitre
+                </p>
+                <IconButton onClick={handleCreateClose}>
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent className="space-y-6">
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Introduction à la programmation"
+                      value={newPlaylist.title}
+                      onChange={(e) => setNewPlaylist({...newPlaylist, title: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-title font-medium mb-2">Description</label>
+                    <textarea
+                      placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
+                      value={newPlaylist.description}
+                      onChange={(e) => setNewPlaylist({...newPlaylist, description: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end mt-6 space-x-4">
+                  <Button
+                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    variant="outlined"
+                    onClick={handleCreateClose}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    className="w-44 rounded-2xl bg-purple text-white hover:bg-purple-700"
+                    variant="contained"
+                    onClick={handleCreatePlaylist}
+                  >
+                    Créer
+                  </Button>
+                </div>
+              </DialogContent>
+            </Box>
+          </Dialog>
+
+          {/* Dialog pour modifier un chapitre */}
+          <Dialog open={openEditDialog} onClose={handleEditClose} fullWidth maxWidth="sm">
+            <Box className="p-6">
+              <DialogTitle className="flex justify-between items-center">
+                <p className="text-title font-montserrat_bold text-2xl">
+                  Modifier le chapitre
+                </p>
+                <IconButton onClick={handleEditClose}>
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent className="space-y-6">
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Introduction à la programmation"
+                      value={editPlaylist.title}
+                      onChange={(e) => setEditPlaylist({...editPlaylist, title: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-title font-medium mb-2">Description</label>
+                    <textarea
+                      placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
+                      value={editPlaylist.description}
+                      onChange={(e) => setEditPlaylist({...editPlaylist, description: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end mt-6 space-x-4">
+                  <Button
+                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    variant="outlined"
+                    onClick={handleEditClose}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    className="w-44 rounded-2xl bg-blue-500 text-white hover:bg-blue-600"
+                    variant="contained"
+                    onClick={handleUpdatePlaylist}
+                  >
+                    Enregistrer
+                  </Button>
+                </div>
+              </DialogContent>
+            </Box>
+          </Dialog>
+
+          {/* Dialog pour supprimer un fichier */}
+          <Dialog open={openDeleteFileDialog} onClose={handleDeleteFileClose} fullWidth maxWidth="sm">
+            <Box className="p-6">
+              <DialogTitle className="flex justify-between items-center">
+                <p className="text-title font-montserrat_bold text-2xl">
+                  Supprimer Fichier
+                </p>
+                <IconButton onClick={handleDeleteFileClose}>
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent className="space-y-6">
+                <p>Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible.</p>
+                <div className="flex justify-end mt-6 space-x-4">
+                  <Button
+                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    variant="outlined"
+                    onClick={handleDeleteFileClose}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
+                    variant="contained"
+                    onClick={handleDeleteFile}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              </DialogContent>
+            </Box>
+          </Dialog>
+
+          <Snackbar
+            open={localSnackbar.open}
+            autoHideDuration={6000}
+            onClose={() => setLocalSnackbar({...localSnackbar, open: false})}
+          >
+            <Alert 
+              onClose={() => setLocalSnackbar({...localSnackbar, open: false})}
+              severity={localSnackbar.severity}
+              sx={{ width: '100%' }}
+            >
+              {localSnackbar.message}
+            </Alert>
+          </Snackbar>
         </div>
-      </div>
-
-      {/* Dialog pour supprimer un chapitre */}
-      <Dialog open={openDeleteDialog} onClose={handleDeleteClose} fullWidth maxWidth="sm">
-        <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl ">
-              Supprimer Chapitre
-            </p>
-            <IconButton onClick={handleDeleteClose}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent className="space-y-6">
-            <p>Êtes-vous sûr de vouloir supprimer ce chapitre et tous ses contenus ?</p>
-            <div className="flex justify-end mt-6 space-x-4">
-              <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
-                variant="outlined"
-                onClick={handleDeleteClose}
-              >
-                Annuler
-              </Button>
-              <Button
-                className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
-                variant="contained"
-                onClick={handleDeletePlaylist}
-              >
-                Supprimer
-              </Button>
-            </div>
-          </DialogContent>
-        </Box>
-      </Dialog>
-
-      {/* Dialog pour créer un nouveau chapitre */}
-      <Dialog open={openCreateDialog} onClose={handleCreateClose} fullWidth maxWidth="sm">
-        <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl">
-              Créer un nouveau chapitre
-            </p>
-            <IconButton onClick={handleCreateClose}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent className="space-y-6">
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Introduction à la programmation"
-                  value={newPlaylist.title}
-                  onChange={(e) => setNewPlaylist({...newPlaylist, title: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
-                />
-              </div>
-              <div>
-                <label className="block text-title font-medium mb-2">Description</label>
-                <textarea
-                  placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
-                  value={newPlaylist.description}
-                  onChange={(e) => setNewPlaylist({...newPlaylist, description: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end mt-6 space-x-4">
-              <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
-                variant="outlined"
-                onClick={handleCreateClose}
-              >
-                Annuler
-              </Button>
-              <Button
-                className="w-44 rounded-2xl bg-purple text-white hover:bg-purple-700"
-                variant="contained"
-                onClick={handleCreatePlaylist}
-              >
-                Créer
-              </Button>
-            </div>
-          </DialogContent>
-        </Box>
-      </Dialog>
-
-      {/* Dialog pour modifier un chapitre */}
-      <Dialog open={openEditDialog} onClose={handleEditClose} fullWidth maxWidth="sm">
-        <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl">
-              Modifier le chapitre
-            </p>
-            <IconButton onClick={handleEditClose}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent className="space-y-6">
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Introduction à la programmation"
-                  value={editPlaylist.title}
-                  onChange={(e) => setEditPlaylist({...editPlaylist, title: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
-                />
-              </div>
-              <div>
-                <label className="block text-title font-medium mb-2">Description</label>
-                <textarea
-                  placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
-                  value={editPlaylist.description}
-                  onChange={(e) => setEditPlaylist({...editPlaylist, description: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end mt-6 space-x-4">
-              <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
-                variant="outlined"
-                onClick={handleEditClose}
-              >
-                Annuler
-              </Button>
-              <Button
-                className="w-44 rounded-2xl bg-blue-500 text-white hover:bg-blue-600"
-                variant="contained"
-                onClick={handleUpdatePlaylist}
-              >
-                Enregistrer
-              </Button>
-            </div>
-          </DialogContent>
-        </Box>
-      </Dialog>
-
-      {/* Dialog pour supprimer un fichier */}
-      <Dialog open={openDeleteFileDialog} onClose={handleDeleteFileClose} fullWidth maxWidth="sm">
-        <Box className="p-6">
-          <DialogTitle className="flex justify-between items-center">
-            <p className="text-title font-montserrat_bold text-2xl">
-              Supprimer Fichier
-            </p>
-            <IconButton onClick={handleDeleteFileClose}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent className="space-y-6">
-            <p>Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible.</p>
-            <div className="flex justify-end mt-6 space-x-4">
-              <Button
-                className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
-                variant="outlined"
-                onClick={handleDeleteFileClose}
-              >
-                Annuler
-              </Button>
-              <Button
-                className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
-                variant="contained"
-                onClick={handleDeleteFile}
-              >
-                Supprimer
-              </Button>
-            </div>
-          </DialogContent>
-        </Box>
-      </Dialog>
-
-      <Snackbar
-        open={localSnackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setLocalSnackbar({...localSnackbar, open: false})}
-      >
-        <Alert 
-          onClose={() => setLocalSnackbar({...localSnackbar, open: false})}
-          severity={localSnackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {localSnackbar.message}
-        </Alert>
-      </Snackbar>
+      </main>
     </div>
   );
 };
