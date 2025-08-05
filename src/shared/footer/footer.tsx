@@ -43,7 +43,7 @@ const Footer = () => {
               </div>
               <div className="footerContact flex items-center justify-center md:justify-start">
                 <FontAwesomeIcon icon={faEnvelope} className="fa w-5 text-center text-[#048c6b]" />
-                <p className="ml-3">foknjeikacademy@gmail.com</p>
+                <p className="ml-3">contact@foknje7ik.com</p>
               </div>
             </div>
             

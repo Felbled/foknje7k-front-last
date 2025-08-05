@@ -769,7 +769,7 @@ const SubjectDetails = () => {
               {/* Bouton Ajouter un fichier (seulement pour admin) */}
               {isAdmin && activePlaylist && (
                 <a
-                  href={`http://localhost:3000/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
+                  href={`https://foknje7ik.com/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
                   className="flex items-center gap-2 bg-purple text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   <InsertDriveFileIcon sx={{ fontSize: 20 }} />
