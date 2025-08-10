@@ -800,7 +800,7 @@ const SubjectDetails = () => {
                             </p>
                           </a>
                           
-kkl                          {/* Bouton Supprimer fichier (pour admin, super teacher et teacher) */}
+                       {/* Bouton Supprimer fichier (pour admin, super teacher et teacher) */}
                           {canManageChapters && (
                             <button
                               onClick={() => handleDeleteFileClick(
