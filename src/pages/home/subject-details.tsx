@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useContext, createContext } from "react";
-import { useLocation, NavLink, useNavigate } from "react-router-dom";
+import { useLocation, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store/store";
 import { Pdf } from "../../assets/svg";
@@ -193,7 +193,6 @@ const SubjectDetails = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id");
-  const navigation = useNavigate();
   
   // Récupération du rôle utilisateur
   const role = useSelector((state: RootState) => state?.user?.userData?.role?.name);
@@ -240,7 +239,7 @@ const SubjectDetails = () => {
   const [expanded, setExpanded] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const showToast = (message: string, severity: "success" | "error") => {
+  const showToast = React.useCallback((message: string, severity: "success" | "error") => {
     if (snackbarContext?.showToast) {
       snackbarContext.showToast(message, severity);
     } else if (snackbarContext?.showSnackbar) {
@@ -248,7 +247,7 @@ const SubjectDetails = () => {
     } else {
       setLocalSnackbar({ open: true, message, severity });
     }
-  };
+  }, [snackbarContext]);
 
   const fileTypeMapping: Record<string, string> = {
     Video: "videos",
@@ -266,13 +265,7 @@ const SubjectDetails = () => {
     corrections: 'Correction'
   };
 
-  useEffect(() => {
-    if (id) {
-      fetchSubjectData();
-    }
-  }, [id]);
-
-  const fetchSubjectData = () => {
+  const fetchSubjectData = React.useCallback(() => {
     getSubjectServiceById(Number(id))
       .then((res) => {
         const data = res.data;
@@ -289,7 +282,13 @@ const SubjectDetails = () => {
         console.error("Failed to fetch subject:", error);
         showToast("Erreur lors du chargement du sujet", "error");
       });
-  };
+  }, [id, showToast]);
+
+  useEffect(() => {
+    if (id) {
+      fetchSubjectData();
+    }
+  }, [id, fetchSubjectData]);
 
   const handleVideoClick = (url: string) => {
     setVideoUrl(url);
@@ -298,8 +297,20 @@ const SubjectDetails = () => {
     }
   };
 
+  // Function to extract YouTube video ID from URL
+  const getYouTubeVideoId = (url: string) => {
+    const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  // Function to check if URL is a YouTube URL
+  const isYouTubeUrl = (url: string) => {
+    return url.includes('youtube.com') || url.includes('youtu.be');
+  };
+
   useEffect(() => {
-    if (videoRef.current) {
+    if (videoRef.current && !isYouTubeUrl(videoUrl)) {
       videoRef.current.src = videoUrl;
       videoRef.current.setAttribute("controlslist", "nodownload");
     }
@@ -521,7 +532,7 @@ const SubjectDetails = () => {
   return (
     <div className="flex h-full pt-24">
       {/* Sidebar - grand écran */}
-      <aside className=" h-screen hidden md:block">
+      <aside className="hidden h-screen md:block">
         <nav className="flex flex-col bg-[#f2f9f7] border-t border-b border-r border-[#09745f]"> 
           <div className="flex items-center justify-between p-4">
             <NavLink 
@@ -635,32 +646,43 @@ const SubjectDetails = () => {
 
       {/* Contenu principal */}
       <main className="flex-1">
-        <div className=" px-4 md:px-12 flex flex-col items-center pb-20">
+        <div className="flex flex-col items-center px-4 pb-20 md:px-12">
           <div className="w-full md:w-11/12 flex flex-col md:flex-row justify-between bg-purple_bg px-4 md:px-10 py-5 h-[78vh] rounded-3xl mb-5">
-            <div className="w-full md:w-9/12 h-full p-5">
+            <div className="w-full h-full p-5 md:w-9/12">
               <div className="relative w-full h-full overflow-hidden bg-black">
-                <video
-                  key={videoUrl}
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  controls
-                  controlsList="nodownload"
-                  onContextMenu={preventContextMenu}
-                  playsInline
-                  preload="auto"
-                >
-                  <source src={videoUrl} />
-                  Your browser does not support the video tag.
-                </video>
+                {videoUrl && isYouTubeUrl(videoUrl) ? (
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(videoUrl)}`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    key={videoUrl}
+                    ref={videoRef}
+                    className="object-cover w-full h-full"
+                    controls
+                    controlsList="nodownload"
+                    onContextMenu={preventContextMenu}
+                    playsInline
+                    preload="auto"
+                  >
+                    <source src={videoUrl} />
+                    Your browser does not support the video tag.
+                  </video>
+                )}
               </div>
-              <p className="text-title text-xl md:text-2xl font-montserrat_semi_bold mt-3">
+              <p className="mt-3 text-xl text-title md:text-2xl font-montserrat_semi_bold">
                 {activePlaylist?.title || "Video title"}
               </p>
               
             </div>
 
-            <div className="w-full md:w-1/4 p-4">
-              <div className="flex justify-between items-center mb-2">
+            <div className="w-full p-4 md:w-1/4">
+              <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl md:text-2xl text-title font-montserrat_semi_bold">
                   Les Chapitres
                 </h2>
@@ -669,7 +691,7 @@ const SubjectDetails = () => {
                 {isAdmin && (
                   <button
                     onClick={handleCreateOpen}
-                    className="bg-purple text-white rounded-full p-2 hover:bg-purple-700 transition-colors"
+                    className="p-2 text-white transition-colors rounded-full bg-purple hover:bg-purple-700"
                     aria-label="Ajouter un chapitre"
                   >
                     <AddIcon />
@@ -684,9 +706,9 @@ const SubjectDetails = () => {
                       playlist.id === activePlaylist?.id ? "bg-purple text-primary" : ""
                     }`}
                   >
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <div 
-                        className="text-lg font-montserrat_semi_bold flex-grow"
+                        className="flex-grow text-lg font-montserrat_semi_bold"
                         onClick={() => handlePlaylistClick(playlist)}
                       >
                         {playlist.title}
@@ -710,7 +732,7 @@ const SubjectDetails = () => {
                           >
                             <FontAwesomeIcon 
                               icon={faEdit} 
-                              className="text-red-500 group-hover:text-red-300 transition-colors duration-200"
+                              className="text-red-500 transition-colors duration-200 group-hover:text-red-300"
                             />
                             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
                                           group-hover:opacity-100 transition-opacity duration-200
@@ -733,11 +755,9 @@ const SubjectDetails = () => {
                           >
                             <FontAwesomeIcon 
                               icon={faTrash} 
-                              className="text-white group-hover:text-red-100 transition-colors duration-200"
+                              className="text-white transition-colors duration-200 group-hover:text-red-100"
                             />
-                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 
-                                          group-hover:opacity-100 transition-opacity duration-200
-                                          text-xs text-red font-medium whitespace-nowrap">
+                            <span className="absolute text-xs font-medium transition-opacity duration-200 -translate-x-1/2 opacity-0 -bottom-6 left-1/2 group-hover:opacity-100 text-red whitespace-nowrap">
                               Supprimer
                             </span>
                           </button>
@@ -750,8 +770,8 @@ const SubjectDetails = () => {
             </div>
           </div>
 
-          <div className="w-full md:w-11/12 flex items-center flex-col bg-purple_bg p-4 md:p-10 rounded-xl">
-            <div className="flex mb-4 w-full items-center justify-between flex-wrap">
+          <div className="flex flex-col items-center w-full p-4 md:w-11/12 bg-purple_bg md:p-10 rounded-xl">
+            <div className="flex flex-wrap items-center justify-between w-full mb-4">
               <div className="flex">
                 {statuses.map((status) => (
                   <div
@@ -770,7 +790,7 @@ const SubjectDetails = () => {
               {isAdmin && activePlaylist && (
                 <a
                   href={`http://localhost:3000/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
-                  className="flex items-center gap-2 bg-purple text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-lg bg-purple hover:bg-purple-700"
                 >
                   <InsertDriveFileIcon sx={{ fontSize: 20 }} />
                   <span>Ajouter un fichier</span>
@@ -780,26 +800,25 @@ const SubjectDetails = () => {
 
             <div className="w-full pt-10">
               {filteredResources.length > 0 ? (
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <ul className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
                   {filteredResources
                     .filter((item) => item.isCompleted === true)
                     .sort((a, b) => a.id - b.id)
                     .map((item) =>
                       activeStatus !== "videos" ? (
-                        <li key={item.id} className="mb-2 list-none flex justify-between items-center">
+                        <li key={item.id} className="flex items-center justify-between mb-2 list-none">
                           <a
                             href={item.url}
-                            className="text-title hover:underline flex items-center"
+                            className="flex items-center text-title hover:underline"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <img alt="pdf" src={Pdf} className="mr-2 w-8 h-8" />
-                            <p className="text-title text-lg font-montserrat_semi_bold">
+                            <img alt="pdf" src={Pdf} className="w-8 h-8 mr-2" />
+                            <p className="text-lg text-title font-montserrat_semi_bold">
                               {item.title}
                             </p>
                           </a>
-                          
-                          {/* Bouton Supprimer fichier (seulement pour admin) */}
+                        
                           {isAdmin && (
                             <button
                               onClick={() => handleDeleteFileClick(
@@ -815,14 +834,14 @@ const SubjectDetails = () => {
                       ) : (
                         <li
                           key={item.id}
-                          className="list-none flex justify-between items-center"
+                          className="flex items-center justify-between list-none"
                         >
                           <div 
                             className="flex items-center cursor-pointer"
                             onClick={() => handleVideoClick(item.url)}
                           >
-                            <OndemandVideoIcon className="text-purple text-3xl" fontSize="large" />
-                            <p className="ms-4 text-title text-lg font-montserrat_semi_bold">
+                            <OndemandVideoIcon className="text-3xl text-purple" fontSize="large" />
+                            <p className="text-lg ms-4 text-title font-montserrat_semi_bold">
                               {item.title}
                             </p>
                           </div>
@@ -844,7 +863,7 @@ const SubjectDetails = () => {
                     )}
                 </ul>
               ) : (
-                <p className="text-gray-500 text-center py-10">Aucune ressource disponible pour cette section.</p>
+                <p className="py-10 text-center text-gray-500">Aucune ressource disponible pour cette section.</p>
               )}
             </div>
           </div>
@@ -852,8 +871,8 @@ const SubjectDetails = () => {
           {/* Dialog pour supprimer un chapitre */}
           <Dialog open={openDeleteDialog} onClose={handleDeleteClose} fullWidth maxWidth="sm">
             <Box className="p-6">
-              <DialogTitle className="flex justify-between items-center">
-                <p className="text-title font-montserrat_bold text-2xl ">
+              <DialogTitle className="flex items-center justify-between">
+                <p className="text-2xl text-title font-montserrat_bold ">
                   Supprimer Chapitre
                 </p>
                 <IconButton onClick={handleDeleteClose}>
@@ -864,14 +883,14 @@ const SubjectDetails = () => {
                 <p>Êtes-vous sûr de vouloir supprimer ce chapitre et tous ses contenus ?</p>
                 <div className="flex justify-end mt-6 space-x-4">
                   <Button
-                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                     variant="outlined"
                     onClick={handleDeleteClose}
                   >
                     Annuler
                   </Button>
                   <Button
-                    className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
+                    className="text-white w-44 rounded-2xl bg-red hover:bg-red-700"
                     variant="contained"
                     onClick={handleDeletePlaylist}
                   >
@@ -885,8 +904,8 @@ const SubjectDetails = () => {
           {/* Dialog pour créer un nouveau chapitre */}
           <Dialog open={openCreateDialog} onClose={handleCreateClose} fullWidth maxWidth="sm">
             <Box className="p-6">
-              <DialogTitle className="flex justify-between items-center">
-                <p className="text-title font-montserrat_bold text-2xl">
+              <DialogTitle className="flex items-center justify-between">
+                <p className="text-2xl text-title font-montserrat_bold">
                   Créer un nouveau chapitre
                 </p>
                 <IconButton onClick={handleCreateClose}>
@@ -896,7 +915,7 @@ const SubjectDetails = () => {
               <DialogContent className="space-y-6">
                 <div className="mt-4 space-y-4">
                   <div>
-                    <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
+                    <label className="block mb-2 font-medium text-title">Titre du chapitre *</label>
                     <input
                       type="text"
                       placeholder="Ex: Introduction à la programmation"
@@ -906,7 +925,7 @@ const SubjectDetails = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-title font-medium mb-2">Description</label>
+                    <label className="block mb-2 font-medium text-title">Description</label>
                     <textarea
                       placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
                       value={newPlaylist.description}
@@ -918,14 +937,14 @@ const SubjectDetails = () => {
                 </div>
                 <div className="flex justify-end mt-6 space-x-4">
                   <Button
-                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                     variant="outlined"
                     onClick={handleCreateClose}
                   >
                     Annuler
                   </Button>
                   <Button
-                    className="w-44 rounded-2xl bg-purple text-white hover:bg-purple-700"
+                    className="text-white w-44 rounded-2xl bg-purple hover:bg-purple-700"
                     variant="contained"
                     onClick={handleCreatePlaylist}
                   >
@@ -939,8 +958,8 @@ const SubjectDetails = () => {
           {/* Dialog pour modifier un chapitre */}
           <Dialog open={openEditDialog} onClose={handleEditClose} fullWidth maxWidth="sm">
             <Box className="p-6">
-              <DialogTitle className="flex justify-between items-center">
-                <p className="text-title font-montserrat_bold text-2xl">
+              <DialogTitle className="flex items-center justify-between">
+                <p className="text-2xl text-title font-montserrat_bold">
                   Modifier le chapitre
                 </p>
                 <IconButton onClick={handleEditClose}>
@@ -950,7 +969,7 @@ const SubjectDetails = () => {
               <DialogContent className="space-y-6">
                 <div className="mt-4 space-y-4">
                   <div>
-                    <label className="block text-title font-medium mb-2">Titre du chapitre *</label>
+                    <label className="block mb-2 font-medium text-title">Titre du chapitre *</label>
                     <input
                       type="text"
                       placeholder="Ex: Introduction à la programmation"
@@ -960,7 +979,7 @@ const SubjectDetails = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-title font-medium mb-2">Description</label>
+                    <label className="block mb-2 font-medium text-title">Description</label>
                     <textarea
                       placeholder="Ex: Ce chapitre couvre les bases de la programmation..."
                       value={editPlaylist.description}
@@ -972,14 +991,14 @@ const SubjectDetails = () => {
                 </div>
                 <div className="flex justify-end mt-6 space-x-4">
                   <Button
-                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                     variant="outlined"
                     onClick={handleEditClose}
                   >
                     Annuler
                   </Button>
                   <Button
-                    className="w-44 rounded-2xl bg-blue-500 text-white hover:bg-blue-600"
+                    className="text-white bg-blue-500 w-44 rounded-2xl hover:bg-blue-600"
                     variant="contained"
                     onClick={handleUpdatePlaylist}
                   >
@@ -993,8 +1012,8 @@ const SubjectDetails = () => {
           {/* Dialog pour supprimer un fichier */}
           <Dialog open={openDeleteFileDialog} onClose={handleDeleteFileClose} fullWidth maxWidth="sm">
             <Box className="p-6">
-              <DialogTitle className="flex justify-between items-center">
-                <p className="text-title font-montserrat_bold text-2xl">
+              <DialogTitle className="flex items-center justify-between">
+                <p className="text-2xl text-title font-montserrat_bold">
                   Supprimer Fichier
                 </p>
                 <IconButton onClick={handleDeleteFileClose}>
@@ -1005,14 +1024,14 @@ const SubjectDetails = () => {
                 <p>Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible.</p>
                 <div className="flex justify-end mt-6 space-x-4">
                   <Button
-                    className="w-44 rounded-2xl border border-gray-400 text-gray-600 hover:bg-gray-50"
+                    className="text-gray-600 border border-gray-400 w-44 rounded-2xl hover:bg-gray-50"
                     variant="outlined"
                     onClick={handleDeleteFileClose}
                   >
                     Annuler
                   </Button>
                   <Button
-                    className="w-44 rounded-2xl bg-red text-white hover:bg-red-700"
+                    className="text-white w-44 rounded-2xl bg-red hover:bg-red-700"
                     variant="contained"
                     onClick={handleDeleteFile}
                   >
