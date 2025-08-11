@@ -197,6 +197,7 @@ const SubjectDetails = () => {
   // Récupération du rôle utilisateur
   const role = useSelector((state: RootState) => state?.user?.userData?.role?.name);
   const isAdmin = role === "ROLE_ADMIN";
+  const canManageChapters = role === "ROLE_ADMIN" || role === "ROLE_SUPER_TEACHER" || role === "ROLE_TEACHER";
 
   const [subjectData, setSubjectData] = useState<SubjectData | null>(null);
   const [activeStatus, setActiveStatus] = useState<string>("videos");
@@ -687,8 +688,8 @@ const SubjectDetails = () => {
                   Les Chapitres
                 </h2>
                 
-                {/* Bouton Ajouter chapitre (seulement pour admin) */}
-                {isAdmin && (
+                {/* Bouton Ajouter chapitre (pour admin, super teacher et teacher) */}
+                {canManageChapters && (
                   <button
                     onClick={handleCreateOpen}
                     className="p-2 text-white transition-colors rounded-full bg-purple hover:bg-purple-700"
@@ -714,8 +715,8 @@ const SubjectDetails = () => {
                         {playlist.title}
                       </div>
                       
-                      {/* Boutons Modifier/Supprimer (seulement pour admin) */}
-                      {isAdmin && (
+                      {/* Boutons Modifier/Supprimer (pour admin, super teacher et teacher) */}
+                      {canManageChapters && (
                         <div className="flex space-x-1">
                           <button
                             className="relative bg-[#3e38db] text-white px-3 py-1 rounded-full text-sm
@@ -786,8 +787,8 @@ const SubjectDetails = () => {
                 ))}
               </div>
               
-              {/* Bouton Ajouter un fichier (seulement pour admin) */}
-              {isAdmin && activePlaylist && (
+              {/* Bouton Ajouter un fichier (pour admin, super teacher et teacher) */}
+              {canManageChapters && activePlaylist && (
                 <a
                   href={`http://localhost:3000/dashboard/files?subjectId=${id}&playlistId=${activePlaylist.id}&type=${statusToTypeMap[activeStatus]}`}
                   className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-lg bg-purple hover:bg-purple-700"
@@ -818,7 +819,8 @@ const SubjectDetails = () => {
                               {item.title}
                             </p>
                           </a>
-                        
+                          
+                          {/* Bouton Supprimer fichier (seulement pour admin) */}
                           {isAdmin && (
                             <button
                               onClick={() => handleDeleteFileClick(
@@ -846,8 +848,8 @@ const SubjectDetails = () => {
                             </p>
                           </div>
                           
-                          {/* Bouton Supprimer vidéo (seulement pour admin) */}
-                          {isAdmin && (
+                          {/* Bouton Supprimer vidéo (pour admin, super teacher et teacher) */}
+                          {canManageChapters && (
                             <button
                               onClick={() => handleDeleteFileClick(
                                 item.id, 

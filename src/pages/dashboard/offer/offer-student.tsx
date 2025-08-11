@@ -171,12 +171,10 @@ const OfferStudent = () => {
     }
   };
 
-  // Calculate total price based on selected subjects' individual prices
+  // Calculate total price based on offer price multiplied by number of selected subjects
   const calculateTotalPrice = () => {
-    return selectedSubjects.reduce((total, subjectId) => {
-      const subject = availableSubjects.find(s => s.id === subjectId);
-      return total + (subject?.price || 40); // fallback to 40 if price not found
-    }, 0);
+    if (!selectedOffer || selectedSubjects.length === 0) return 0;
+    return selectedOffer.price * selectedSubjects.length;
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,7 +372,7 @@ const OfferStudent = () => {
                       <span className="text-sm text-gray-500">Niveau {subject.level}</span>
                       <span className="text-xs text-gray-400">Par {subject.superTeacherFullName}</span>
                       <span className="text-sm font-semibold text-primary">
-                        {subject.price ? `${subject.price} DT` : '40 DT'}
+                        {selectedOffer?.price || 0} DT par matière
                       </span>
                     </div>
                     {selectedSubjects.includes(subject.id) && (
@@ -464,7 +462,7 @@ const OfferStudent = () => {
                     return (
                       <div key={subjectId} className="flex justify-between">
                         <span>{subject?.speciality || 'Matière'}</span>
-                        <span>{subject?.price || 40} DT</span>
+                        <span>{selectedOffer?.price || 0} DT</span>
                       </div>
                     );
                   })}
